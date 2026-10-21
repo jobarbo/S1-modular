@@ -8,7 +8,7 @@
 :root {
   --bg: #0b0c0e; --panel: #1b1d21; --line: #2c3037; --edge: #3a3f48; --text: #d9dce1; --dim: #7d8590;
   --accent: #ff6a2a; --accent2: #3ec7c2; --warn: #f2c14e; --bad: #ff5470;
-  --lcd-bg: #08100d; --lcd: #7dffb0; --lcd-dim: #3a7a58;
+  --lcd-bg: #020304; --lcd: #dff0ff; --lcd-dim: #5d6873;
   --radius: 6px; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 * { box-sizing: border-box; }
@@ -30,7 +30,7 @@ header {
   box-shadow: inset 0 2px 6px #000, 0 1px 0 #ffffff14;
 }
 .status { font-family: var(--mono); font-size: 12px; color: var(--lcd-dim); display: flex; gap: 16px; flex-wrap: wrap; text-transform: uppercase; }
-.status .on { color: var(--lcd); text-shadow: 0 0 6px #7dffb088; }
+.status .on { color: var(--lcd); text-shadow: 0 0 6px #9fc7ff88; }
 .spacer { flex: 1; }
 button {
   background: linear-gradient(180deg, #3a3e45, #25282d); color: var(--text); border: 1px solid #000; border-radius: 4px;
@@ -41,8 +41,41 @@ button:hover { color: #fff; box-shadow: inset 0 1px 0 #ffffff22, 0 2px 3px #0008
 button:active { transform: translateY(1px); box-shadow: inset 0 2px 4px #000a; }
 button.danger { color: var(--bad); }
 
-/* ---- rack ---- */
-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; padding: 16px 16px 40px; }
+/* ---- layout: zones stacked top to bottom, modules on a fixed grid ---- */
+main { display: flex; flex-direction: column; gap: 22px; padding: 16px 16px 40px; max-width: 1480px; margin: 0 auto; }
+.zone { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.zone > section { min-width: 0; }
+.zone-h {
+  display: flex; align-items: baseline; gap: 12px; font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #c9ced6;
+  padding-bottom: 6px; border-bottom: 1px solid var(--line); list-style: none;
+}
+.zone-h span { font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--dim); }
+summary.zone-h { cursor: pointer; user-select: none; }
+summary.zone-h::-webkit-details-marker { display: none; }
+summary.zone-h::before { content: "\25B8"; color: var(--accent); transition: transform .15s; }
+details[open] > summary.zone-h::before { transform: rotate(90deg); }
+details.zone > :not(summary) { margin-top: 12px; }
+.row { display: grid; gap: 14px; }
+.r3 { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .8fr); }
+.r4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rmods { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 2fr); }
+@media (max-width: 1100px) {
+  .r3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .r3 > :last-child { grid-column: 1 / -1; }
+  .r4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rmods { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rmods > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) { .r3, .r4, .rmods { grid-template-columns: minmax(0, 1fr); } }
+.btngroup { display: flex; align-items: center; gap: 6px; padding-left: 12px; border-left: 1px solid #000; box-shadow: -1px 0 0 #ffffff10; }
+.btngroup .lbl { margin-right: 2px; }
+.knobrow { display: flex; align-items: flex-start; gap: 14px; }
+.knobrow .note, .knobrow .srcgrid { flex: 1; margin-top: 18px; }
+.lforow { display: flex; align-items: flex-end; gap: 6px; margin-top: 6px; }
+.lforow .tog { margin-left: auto; margin-bottom: 30px; }
+.divslot { width: 92px; margin-bottom: 26px; }
+.kgroup { display: flex; flex-direction: column; gap: 4px; padding: 6px 8px 4px; border-radius: 5px; background: #ffffff05; box-shadow: inset 0 0 0 1px #ffffff0a; }
+.kgroup > div { display: flex; gap: 4px; }
+.kgroup > .lbl { text-align: center; color: #9aa1ab; }
+.knobs .tog { align-self: center; }
 section {
   position: relative; min-width: 0; padding: 16px 16px 12px; border: 1px solid #000; border-radius: var(--radius);
   background: linear-gradient(180deg, #212429, #181a1e);
@@ -56,7 +89,6 @@ section::before {
     radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 0 100% / 8px 8px no-repeat,
     radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 100% 100% / 8px 8px no-repeat;
 }
-section.wide { grid-column: 1 / -1; }
 section h2 {
   font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #b4bac3; margin: 0 0 12px;
   display: flex; align-items: center; gap: 8px; text-shadow: 0 1px 0 #000;
@@ -75,11 +107,11 @@ section h2 .note, section h2 label { text-transform: none; letter-spacing: 0; fo
 select, input[type=number] {
   appearance: none; width: 100%; min-width: 0; font: 11px var(--mono); color: var(--lcd); background-color: var(--lcd-bg);
   border: 1px solid #000; border-radius: 3px; padding: 5px 22px 5px 7px; box-shadow: inset 0 2px 5px #000;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%237dffb0'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%23dff0ff'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 7px center; cursor: pointer; text-overflow: ellipsis;
 }
 select:hover, select:focus-visible { outline: none; box-shadow: inset 0 2px 5px #000, 0 0 0 1px var(--lcd-dim); }
-option, optgroup { background: #0e1512; color: var(--lcd); }
+option, optgroup { background: #050607; color: var(--lcd); }
 
 /* ---- rotary knobs ---- */
 .knob {
@@ -137,15 +169,71 @@ option, optgroup { background: #0e1512; color: var(--lcd); }
 .out .meter i { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 .mini { width: 70px; display: inline-block; vertical-align: middle; }
 
-/* ---- matrix ---- */
-.matrix { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
-.matrix th { text-align: left; font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); padding: 0 6px 2px; text-shadow: 0 1px 0 #000; }
-.matrix td { padding: 4px 6px; vertical-align: middle; background: #14161a; }
-.matrix td:first-child { border-radius: 4px 0 0 4px; }
-.matrix td:last-child { border-radius: 0 4px 4px 0; }
-.matrix .out { font-family: var(--mono); font-size: 11px; width: 130px; color: var(--lcd); }
+/* ---- matrix: OLED routing grid (sources x destinations) + MATRIX encoder ---- */
+:root { --oled: #e9f3ff; --oled-dim: #5d6873; --oled-bg: #020304; }
+.mxwrap { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.mxgrid { flex: 1 1 560px; min-width: 0; padding: 4px; }
+.oled {
+  background: var(--oled-bg); color: var(--oled); font-family: var(--mono); border: 1px solid #000; border-radius: 4px;
+  box-shadow: 0 0 0 3px #0b0c0e, 0 0 0 4px #2c3037, inset 0 0 18px #0d1a2a;
+}
+.matrix { border-collapse: separate; border-spacing: 0; width: 100%; font-family: var(--mono); }
+.matrix tr.scr > * { background: var(--oled-bg); border-bottom: 1px dotted #1f262e; }
+.matrix tr.scr > * + * { border-left: 1px dotted #1f262e; }
+.matrix tr.top > * { border-bottom: 1px solid #39424d; padding: 6px 3px 5px; }
+.matrix tr.top > :first-child { border-top-left-radius: 5px; }
+.matrix tr.top > :last-child { border-top-right-radius: 5px; }
+.matrix tr.bot > * { border-bottom: 0; }
+.matrix tr.bot > :first-child { border-bottom-left-radius: 5px; }
+.matrix tr.bot > :last-child { border-bottom-right-radius: 5px; }
+.matrix th { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); padding: 0; text-shadow: 0 1px 0 #000; vertical-align: middle; }
+.matrix th.rowh { text-align: left; padding: 0 10px 0 8px; white-space: nowrap; }
+.matrix tr.scr th { color: var(--oled); text-shadow: 0 0 4px #9fc7ff55; letter-spacing: .6px; font-weight: 400; font-size: 10.5px; }
+.matrix tr.top th.rowh { color: var(--oled-dim); font-size: 9px; }
+.matrix td { padding: 0; text-align: center; vertical-align: middle; }
+.matrix tr.sep > * { padding-top: 12px; }
+.matrix tr:not(.scr) td { padding-left: 3px; padding-right: 3px; }
+.matrix select.cs {
+  min-width: 84px; font-size: 10px; padding: 3px 16px 3px 4px; color: var(--oled); background-color: transparent; border: 1px solid transparent; box-shadow: none;
+  text-transform: uppercase; letter-spacing: .4px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%23e9f3ff'/%3E%3C/svg%3E");
+}
+.matrix select.cs:hover, .matrix select.cs:focus-visible { border-color: var(--oled-dim); box-shadow: none; }
+.matrix select.cs option, .matrix select.cs optgroup { background: #050607; color: var(--oled); }
+.matrix .out { font-family: var(--mono); font-size: 10.5px; color: var(--lcd); }
 .matrix .out .meter { margin-bottom: 3px; }
-.matrix td .knob { margin: 0 auto; }
+.matrix .rh { display: flex; align-items: center; gap: 0; }
+.matrix .rn { flex: 1; }
+.meter.mm { width: 40px; height: 5px; margin-left: 10px; background: #0b0f14; border-color: #1a2028; box-shadow: none; }
+.meter.mm::after { background: repeating-linear-gradient(90deg, transparent 0 3px, #0b0f14 3px 4px); }
+.rled { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: #1d2127; vertical-align: 1px; }
+.rled.on { background: var(--oled); box-shadow: 0 0 6px var(--oled); }
+.pad {
+  --l: 50%; --w: 0%; position: relative; display: block; width: 100%; min-width: 46px; height: 26px; padding: 0 0 4px;
+  background: transparent; border: 0; border-radius: 0; box-shadow: none; color: var(--oled-dim);
+  font: 11px/1 var(--mono); letter-spacing: 0; text-transform: none; cursor: pointer;
+}
+.pad.on { color: var(--oled); text-shadow: 0 0 4px #9fc7ff66; }
+.pad::before { content: ""; position: absolute; left: 22%; right: 22%; bottom: 4px; height: 2px; background: #161b21; }
+.pad::after { content: ""; position: absolute; bottom: 4px; height: 2px; left: calc(22% + var(--l) * .56); width: calc(var(--w) * .56); background: var(--oled); }
+.pad:hover { color: var(--oled); box-shadow: inset 0 0 0 1px var(--oled-dim); }
+.pad:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--oled); }
+.pad.sel { background: var(--oled); color: #000; text-shadow: none; }
+.pad.sel::before { background: #9aa6b2; }
+.pad.sel::after { background: #000; }
+.pad:active { transform: none; }
+.enc { flex: 0 0 180px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px; border-radius: 6px; background: #14161a; box-shadow: inset 0 2px 6px #000; }
+.enc-oled { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; padding: 8px 6px; font-size: 10.5px; text-align: center; text-transform: uppercase; }
+.enc-oled b { font-size: 22px; font-weight: 400; margin: 4px 0 2px; text-shadow: 0 0 6px #9fc7ff66; }
+.enc-oled small { color: var(--oled-dim); font-size: 9px; letter-spacing: 1px; }
+.knob.lg { width: 100px; }
+.knob.lg .dial { width: 64px; height: 64px; margin: 9px 0; background: repeating-conic-gradient(from 0deg, #2c3036 0 6deg, #3b4048 6deg 12deg); }
+.knob.lg .dial::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #4f545d, #23262b 70%); box-shadow: 0 1px 3px #000c, inset 0 1px 0 #ffffff26; }
+.knob.lg .dial i { z-index: 1; }
+.knob.lg .dial::before { inset: -8px; -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); }
+.knob.lg .dial i::before { height: 18px; width: 3px; margin-left: -1.5px; top: 11px; background: var(--oled); box-shadow: 0 0 5px #9fc7ff88; }
+.knob.lg output { display: none; }
+.knob.enc-knob { --accent: #e9f3ff; }
 .cap { display: block; text-align: center; font-size: 9px; color: var(--warn); letter-spacing: .3px; }
 .cap.ok { color: var(--lcd); }
 .srcgrid { display: grid; grid-template-columns: 78px 1fr 44px; gap: 6px 10px; align-items: center; font-size: 11px; }
@@ -162,7 +250,8 @@ option, optgroup { background: #0e1512; color: var(--lcd); }
 .note { color: var(--dim); font-size: 11px; margin: 6px 0 0; }
 .banner { background: #3a1d22; border: 1px solid var(--bad); color: #ffd0d8; padding: 8px 16px; display: none; }
 .monbtns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-@media (max-width: 520px) { main { padding: 12px 16px; grid-template-columns: 1fr; } }
+#log { margin-top: 10px; }
+@media (max-width: 520px) { main { padding: 12px 16px 32px; } }
 </style>
 </head>
 <body>
@@ -171,8 +260,13 @@ option, optgroup { background: #0e1512; color: var(--lcd); }
   <div class="brand"><b>S-1</b><span>MODHUB</span></div>
   <div class="status" id="status"></div>
   <div class="spacer"></div>
+  <div class="btngroup"><span class="lbl">Preset</span>
+    <button id="btnExport">Export</button><button id="btnImport">Import</button><button id="btnReset">Reset</button>
+  </div>
+  <div class="btngroup">
   <button id="btnRestore" title="Send the base (knob) value of every modulated CC">Restore knobs</button>
-  <button id="btnAllOff" class="danger" title="Disable all matrix slots and restore knobs">All off</button>
+  <button id="btnAllOff" class="danger" title="Clear every matrix routing and restore knobs">All off</button>
+  </div>
 </header>
 <main id="main"></main>
 <input type="file" id="importFile" accept="application/json" hidden>
@@ -221,9 +315,10 @@ const DEFAULT_STATE = {
   vel: { curve: 'lin', min: 0, max: 100, invert: false },
   env: { mode: 'ad', attack: 5, decay: 250, velAmt: 0 },
   trig: { div: '1/16', prob: 50, swing: 50, ratchet: 2, ratchetProb: 0, accMin: 40, accMax: 100, decay: 120 },
-  matrix: Array.from({ length: 8 }, (_, i) => ({ on: false, src: ['lfo1', 'vel', 'trig', 'lfo2', 'env', 'rnd', 'key', 'lfo3'][i], dst: [74, 74, 71, 15, 24, 13, 74, 92][i], depth: 20 })),
+  grid: { cols: [74, 71, 24, 15, 13, 73, 72, 92], cells: {} }, // cells: 'src|cc' -> depth (-100..100)
   bases: {},
   captured: {},
+  view: { setup: true, monitor: false },
 };
 const STORE_KEY = 's1-modhub-v1';
 let state = loadState();
@@ -502,12 +597,15 @@ function tick() {
   if (dBeat < 0) { onTransportStart(); dBeat = 0; }
   updateSources(dt, dBeat, prevPos);
 
-  // Sum matrix contributions per destination
-  const sums = new Map();
-  for (const m of state.matrix) {
-    if (!m.on || !m.src || !m.dst) continue;
-    const scale = SRC_BIPOLAR[m.src] ? 63.5 : 127;
-    sums.set(m.dst, (sums.get(m.dst) || 0) + src[m.src] * scale * m.depth / 100);
+  // Sum matrix contributions per destination (cells on a visible column)
+  const sums = new Map(), modulated = new Set();
+  for (const [key, depth] of Object.entries(state.grid.cells)) {
+    if (!depth) continue;
+    const [s, c] = key.split('|'), cc = Number(c);
+    if (!state.grid.cols.includes(cc) || src[s] === undefined) continue;
+    const scale = SRC_BIPOLAR[s] ? 63.5 : 127;
+    sums.set(cc, (sums.get(cc) || 0) + src[s] * scale * depth / 100);
+    modulated.add(cc);
   }
   // Destinations no longer modulated go back to their knob value
   for (const cc of activeDsts) if (!sums.has(cc)) { sums.set(cc, 0); }
@@ -515,7 +613,7 @@ function tick() {
   for (const [cc, sum] of sums) {
     const val = Math.max(0, Math.min(127, Math.round(baseOf(cc) + sum)));
     outVals.set(cc, val);
-    if (state.matrix.some((m) => m.on && m.dst === cc)) nextActive.add(cc);
+    if (modulated.has(cc)) nextActive.add(cc);
     else if (lastSent.get(cc) !== val) nextActive.add(cc); // keep until base restored
   }
   activeDsts = nextActive;
@@ -535,7 +633,7 @@ function tick() {
 
 function restoreKnobs() {
   const now = performance.now();
-  const ccs = new Set([...activeDsts, ...state.matrix.filter((m) => m.dst).map((m) => m.dst)]);
+  const ccs = new Set([...activeDsts, ...state.grid.cols]);
   for (const cc of ccs) if (lastSent.has(cc)) sendCC(cc, baseOf(cc), now);
 }
 
@@ -582,102 +680,177 @@ function render() {
   const s = state;
   const ch = Object.fromEntries(Array.from({ length: 16 }, (_, i) => [i + 1, 'Ch ' + (i + 1)]));
   document.getElementById('main').innerHTML = `
-  <section>
-    <h2>MIDI</h2>
-    <div class="fields">
-      <label class="fld"><span class="lbl">From S-1</span><select data-path="midi.inId"></select></label>
-      <label class="fld"><span class="lbl">To S-1</span><select data-path="midi.outId"></select></label>
-      ${sel('Channel', 'midi.ch', ch, true)}
+  <details class="zone" data-view="setup" ${s.view.setup ? 'open' : ''}>
+    <summary class="zone-h">Setup <span>MIDI ports, channel, clock</span></summary>
+    <div class="row r3">
+      <section>
+        <h2>MIDI</h2>
+        <div class="fields">
+          <label class="fld"><span class="lbl">From S-1</span><select data-path="midi.inId"></select></label>
+          <label class="fld"><span class="lbl">To S-1</span><select data-path="midi.outId"></select></label>
+          ${sel('Channel', 'midi.ch', ch, true)}
+        </div>
+        <div class="knobrow">${rng('Max rate', 'midi.rate', 50, 1000, 10, '')}
+          <p class="note">CC messages per second, all destinations. The S-1 synth listens on channel 3 by default.</p></div>
+      </section>
+      <section>
+        <h2>Clock</h2>
+        <div class="fields">${sel('Source', 'clock.mode', { auto: 'Follow S-1 (auto)', internal: 'Internal only' })}</div>
+        <div class="knobrow">${rng('Int. BPM', 'clock.bpm', 40, 240, 1, '')}<div class="srcgrid" id="clockInfo"></div></div>
+      </section>
+      <section>
+        <h2>Velocity check</h2>
+        <p class="note" id="velStats">No notes received yet.</p>
+        <p class="note" id="velHint">Play the S-1 sequencer to see whether it sends varying velocity.</p>
+      </section>
     </div>
-    <div class="knobs">${rng('Max rate', 'midi.rate', 50, 1000, 10, '')}</div>
-    <p class="note">Default S-1 synth channel is 3. Max rate is CC messages per second across all destinations.</p>
-    <div class="sub"><h3>Velocity check <span class="note" id="velStats"></span></h3>
-      <p class="note" id="velHint">Play the S-1 sequencer to see whether it sends varying velocity.</p></div>
-  </section>
+  </details>
 
-  <section>
-    <h2>Clock</h2>
-    <div class="fields">${sel('Source', 'clock.mode', { auto: 'Follow S-1 (auto)', internal: 'Internal only' })}</div>
-    <div class="knobs">${rng('Int. BPM', 'clock.bpm', 40, 240, 1, '')}</div>
-    <p class="note">Auto follows the S-1's MIDI clock when it is received, and falls back to the internal BPM when it isn't.</p>
-    <div class="srcgrid" id="clockInfo"></div>
-  </section>
+  <div class="zone">
+    <div class="zone-h">Mod matrix <span>sources &times; destinations</span></div>
+    <section>
+      <div class="mxwrap">
+        <div class="table-scroll mxgrid">${matrixHtml()}</div>
+        <div class="enc" id="enc">${encoderHtml()}</div>
+      </div>
+      <p class="note">Click a cell to route it, then turn MATRIX. Arrows move the cursor, +/- nudge, double-click clears.
+        Output = S-1 knob + sum of (source &times; amount). The knob row follows the S-1 panel once you turn a knob there ("captured"); until then it assumes 64.</p>
+    </section>
+  </div>
 
-  <section>
-    <h2>Sources <span class="note">live</span></h2>
-    <div class="srcgrid">${SOURCES.map(([k, n, bi]) => `<span>${n}</span><div class="meter ${bi ? 'bi' : ''}"><i data-src="${k}"></i></div><span class="v" data-srcv="${k}"></span>`).join('')}</div>
-  </section>
-
-  <section class="wide">
-    <h2>Mod matrix <span class="note">output = knob value + sum of (source × depth)</span></h2>
-    <div class="table-scroll"><table class="matrix">
-      <tr><th></th><th>Source</th><th>Destination</th><th>Depth</th><th>Knob (base)</th><th>Output</th></tr>
-      ${s.matrix.map((m, i) => `<tr>
-        <td><label class="tog solo"><input type="checkbox" data-path="matrix.${i}.on" ${m.on ? 'checked' : ''}><span class="led"></span></label></td>
-        <td><select data-path="matrix.${i}.src">${opts(Object.fromEntries(SOURCES.map(([k, n]) => [k, n])), m.src)}</select></td>
-        <td><select data-path="matrix.${i}.dst" data-num data-rerender>${dstOptions(m.dst)}</select></td>
-        <td>${rng('', `matrix.${i}.depth`, -100, 100, 1, 'sd', 'sm')}</td>
-        <td>${baseCell(m.dst)}</td>
-        <td class="out"><div class="meter"><i data-out="${m.dst}"></i></div><span data-outv="${m.dst}"></span></td>
-      </tr>`).join('')}
-    </table></div>
-    <p class="note">Base = the S-1 knob position. Turn the knob on the S-1 and the base follows ("captured"). Until then it assumes 64; set it here to match the panel.</p>
-  </section>
-
-  ${s.lfos.map((l, i) => `<section>
-    <h2>LFO ${i + 1} <span class="mini"><span class="meter bi"><i data-src="lfo${i + 1}"></i></span></span></h2>
-    <div class="fields">
-      ${sel('Shape', `lfos.${i}.shape`, SHAPES)}
-      ${sel('Retrigger', `lfos.${i}.retrig`, RETRIG)}
-      ${l.sync ? sel('Division', `lfos.${i}.div`, divOpts) : ''}
+  <div class="zone">
+    <div class="zone-h">Modulators <span>the sources feeding the matrix</span></div>
+    <div class="row r4">
+      ${s.lfos.map((l, i) => `<section>
+        <h2>LFO ${i + 1} <span class="mini"><span class="meter bi"><i data-src="lfo${i + 1}"></i></span></span></h2>
+        <div class="fields">
+          ${sel('Shape', `lfos.${i}.shape`, SHAPES)}
+          ${sel('Retrigger', `lfos.${i}.retrig`, RETRIG)}
+        </div>
+        <div class="lforow">
+          ${l.sync ? `<div class="divslot">${sel('Division', `lfos.${i}.div`, divOpts)}</div>` : logRng('Rate', `lfos.${i}.rate`, 0.01, 50)}
+          ${rng('Phase', `lfos.${i}.phase`, 0, 359, 1, 'deg')}
+          ${chk('Sync', `lfos.${i}.sync`)}
+        </div>
+      </section>`).join('')}
     </div>
-    <div class="knobs">
-      ${l.sync ? '' : logRng('Rate', `lfos.${i}.rate`, 0.01, 50)}
-      ${rng('Phase', `lfos.${i}.phase`, 0, 359, 1, 'deg')}
+    <div class="row rmods">
+      <section>
+        <h2>Velocity <span class="mini"><span class="meter"><i data-src="vel"></i></span></span></h2>
+        <div class="fields">${sel('Curve', 'vel.curve', { lin: 'Linear', exp: 'Exponential', log: 'Logarithmic', s: 'S-curve' })}</div>
+        <div class="knobs">${rng('Min', 'vel.min', 0, 100, 1, '%')}${rng('Max', 'vel.max', 0, 100, 1, '%')}${chk('Invert', 'vel.invert')}</div>
+      </section>
+      <section>
+        <h2>Note envelope <span class="mini"><span class="meter"><i data-src="env"></i></span></span></h2>
+        <div class="fields">${sel('Mode', 'env.mode', { ad: 'AD (one-shot)', asr: 'ASR (hold while gate)' })}</div>
+        <div class="knobs">${logRng('Attack', 'env.attack', 1, 5000, 'ms')}${logRng('Decay/Rel', 'env.decay', 5, 10000, 'ms')}${rng('Vel amt', 'env.velAmt', 0, 100, 1, '%')}</div>
+      </section>
+      <section>
+        <h2>Trig tools <span class="mini"><span class="meter"><i data-src="trig"></i></span></span></h2>
+        <div class="fields">${sel('Division', 'trig.div', divOpts)}</div>
+        <div class="knobs">
+          <div class="kgroup"><span class="lbl">Timing</span><div>${rng('Prob', 'trig.prob', 0, 100, 1, '%')}${rng('Swing', 'trig.swing', 50, 75, 1, '%')}</div></div>
+          <div class="kgroup"><span class="lbl">Ratchet</span><div>${rng('Count', 'trig.ratchet', 1, 4, 1, '')}${rng('Chance', 'trig.ratchetProb', 0, 100, 1, '%')}</div></div>
+          <div class="kgroup"><span class="lbl">Accent</span><div>${rng('Min', 'trig.accMin', 0, 100, 1, '%')}${rng('Max', 'trig.accMax', 0, 100, 1, '%')}${logRng('Decay', 'trig.decay', 5, 2000, 'ms')}</div></div>
+        </div>
+        <p class="note">Feeds the "Trig pulse" (decaying accent) and "Trig S&amp;H" (new random value) rows of the matrix on each clocked step.</p>
+      </section>
     </div>
-    ${chk('Sync to clock', `lfos.${i}.sync`)}
-  </section>`).join('')}
+  </div>
 
-  <section>
-    <h2>Velocity</h2>
-    <div class="fields">${sel('Curve', 'vel.curve', { lin: 'Linear', exp: 'Exponential', log: 'Logarithmic', s: 'S-curve' })}</div>
-    <div class="knobs">${rng('Min', 'vel.min', 0, 100, 1, '%')}${rng('Max', 'vel.max', 0, 100, 1, '%')}</div>
-    ${chk('Invert', 'vel.invert')}
-  </section>
-
-  <section>
-    <h2>Note envelope</h2>
-    <div class="fields">${sel('Mode', 'env.mode', { ad: 'AD (one-shot)', asr: 'ASR (hold while gate)' })}</div>
-    <div class="knobs">${logRng('Attack', 'env.attack', 1, 5000, 'ms')}${logRng('Decay/Rel', 'env.decay', 5, 10000, 'ms')}${rng('Vel amt', 'env.velAmt', 0, 100, 1, '%')}</div>
-  </section>
-
-  <section>
-    <h2>Trig tools</h2>
-    <div class="fields">${sel('Division', 'trig.div', divOpts)}</div>
-    <div class="knobs">
-      ${rng('Prob', 'trig.prob', 0, 100, 1, '%')}${rng('Swing', 'trig.swing', 50, 75, 1, '%')}
-      ${rng('Ratchets', 'trig.ratchet', 1, 4, 1, '')}${rng('Ratchet %', 'trig.ratchetProb', 0, 100, 1, '%')}
-      ${rng('Acc min', 'trig.accMin', 0, 100, 1, '%')}${rng('Acc max', 'trig.accMax', 0, 100, 1, '%')}
-      ${logRng('Decay', 'trig.decay', 5, 2000, 'ms')}
-    </div>
-    <p class="note">Fires "Trig pulse" (decaying accent) and "Trig S&H" (new random value) on clocked steps. Route them in the matrix.</p>
-  </section>
-
-  <section class="wide">
-    <h2>MIDI monitor
-      <span class="monbtns">
-        <label class="tog"><input type="checkbox" id="logClock"><span class="led"></span>clock</label>
+  <details class="zone" data-view="monitor" ${s.view.monitor ? 'open' : ''}>
+    <summary class="zone-h">MIDI monitor <span>incoming and outgoing messages</span></summary>
+    <section>
+      <div class="monbtns">
+        <label class="tog"><input type="checkbox" id="logClock" ${log.showClock ? 'checked' : ''}><span class="led"></span>clock</label>
         <label class="tog"><input type="checkbox" id="logOut" ${log.showOut ? 'checked' : ''}><span class="led"></span>outgoing</label>
         <button id="logClear">Clear</button>
-        <button id="btnExport">Export preset</button>
-        <button id="btnImport">Import preset</button>
-        <button id="btnReset">Reset to defaults</button>
-      </span></h2>
-    <div id="log"></div>
-  </section>`;
+      </div>
+      <div id="log"></div>
+    </section>
+  </details>`;
   refreshPorts();
+  paintPads();
   log.dirty = true;
 }
+
+const ui = { sel: { src: 'lfo1', cc: null } };
+const srcName = Object.fromEntries(SOURCES.map(([k, n]) => [k, n]));
+const cellKey = (s, cc) => `${s}|${cc}`;
+const signed = (d) => (d > 0 ? '+' : '') + d;
+
+function padHtml(s, cc) {
+  return `<button class="pad" data-psrc="${s}" data-cc="${cc}" aria-label="${srcName[s]} to ${CC_NAME[cc]}"><span></span></button>`;
+}
+function matrixHtml() {
+  const cols = state.grid.cols;
+  if (!cols.includes(ui.sel.cc)) ui.sel.cc = cols[0];
+  return `<table class="matrix">
+    <tr class="scr top"><th class="rowh">SRC / DST</th>${cols.map((cc, i) => `<th><select class="cs" data-path="grid.cols.${i}" data-num data-rerender>${dstOptions(cc)}</select></th>`).join('')}</tr>
+    ${SOURCES.map(([k, n, bi], r) => `<tr class="scr${r === SOURCES.length - 1 ? ' bot' : ''}"><th class="rowh"><div class="rh"><span class="rled" data-rled="${k}"></span><span class="rn">${n}</span><span class="meter mm ${bi ? 'bi' : ''}"><i data-src="${k}"></i></span></div></th>${cols.map((cc) => `<td>${padHtml(k, cc)}</td>`).join('')}</tr>`).join('')}
+    <tr class="sep"><th class="rowh">S-1 knob</th>${cols.map((cc) => `<td>${baseCell(cc)}</td>`).join('')}</tr>
+    <tr><th class="rowh">Output</th>${cols.map((cc) => `<td class="out"><div class="meter"><i data-out="${cc}"></i></div><span data-outv="${cc}"></span></td>`).join('')}</tr>
+  </table>`;
+}
+function encoderHtml() {
+  const { src: s, cc } = ui.sel, key = cellKey(s, cc);
+  if (state.grid.cells[key] === undefined) state.grid.cells[key] = 0;
+  const d = state.grid.cells[key];
+  return `<div class="oled enc-oled"><span>${esc(srcName[s])}</span><span class="arrow">&#9654; ${esc(CC_NAME[cc])}</span>` +
+    `<b>${signed(d)}</b><small>CC${cc} &middot; ${d ? 'ROUTED' : 'OFF'}</small></div>` +
+    rng('', `grid.cells.${key}`, -100, 100, 1, 'sd', 'lg enc-knob') +
+    '<span class="lbl">Matrix</span><button id="padClear">Clear routing</button>';
+}
+function paintPads() {
+  const routed = new Set();
+  for (const el of document.querySelectorAll('.pad')) {
+    const d = state.grid.cells[cellKey(el.dataset.psrc, el.dataset.cc)] || 0;
+    if (d) routed.add(el.dataset.psrc);
+    el.style.setProperty('--l', (50 + Math.min(0, d) / 2) + '%');
+    el.style.setProperty('--w', Math.abs(d) / 2 + '%');
+    el.classList.toggle('on', d !== 0);
+    el.classList.toggle('sel', el.dataset.psrc === ui.sel.src && Number(el.dataset.cc) === ui.sel.cc);
+    el.firstChild.textContent = d ? signed(d) : '\u00b7';
+    el.title = `${el.getAttribute('aria-label')}: ${signed(d)}`;
+  }
+  for (const el of document.querySelectorAll('[data-rled]')) el.classList.toggle('on', routed.has(el.dataset.rled));
+  const enc = document.querySelector('.enc-oled');
+  if (enc) {
+    const d = state.grid.cells[cellKey(ui.sel.src, ui.sel.cc)] || 0;
+    enc.querySelector('b').textContent = signed(d);
+    enc.querySelector('small').innerHTML = `CC${ui.sel.cc} &middot; ${d ? 'ROUTED' : 'OFF'}`;
+  }
+}
+function selectPad(pad, create = true) {
+  ui.sel = { src: pad.dataset.psrc, cc: Number(pad.dataset.cc) };
+  const key = cellKey(ui.sel.src, ui.sel.cc);
+  if (create && !state.grid.cells[key]) { state.grid.cells[key] = 50; save(); }
+  document.getElementById('enc').innerHTML = encoderHtml();
+  paintPads();
+}
+function clearCell(s, cc) {
+  state.grid.cells[cellKey(s, cc)] = 0; save();
+  document.getElementById('enc').innerHTML = encoderHtml();
+  paintPads();
+}
+/* Arrow keys move the matrix cursor like the MATRIX encoder; +/- nudge the amount */
+document.addEventListener('keydown', (e) => {
+  const pad = e.target.closest && e.target.closest('.pad');
+  if (!pad) return;
+  const td = pad.parentElement, tr = td.parentElement, col = [...tr.children].indexOf(td);
+  let next = null;
+  if (e.key === 'ArrowLeft') next = td.previousElementSibling;
+  if (e.key === 'ArrowRight') next = td.nextElementSibling;
+  if (e.key === 'ArrowUp') next = tr.previousElementSibling && tr.previousElementSibling.children[col];
+  if (e.key === 'ArrowDown') next = tr.nextElementSibling && tr.nextElementSibling.children[col];
+  const np = next && next.querySelector('.pad');
+  if (np) { e.preventDefault(); np.focus(); selectPad(np, false); return; }
+  if (e.key === '+' || e.key === '=' || e.key === '-') {
+    e.preventDefault();
+    const inp = document.querySelector('.enc-knob input');
+    setKnob(inp, Number(inp.value) + (e.key === '-' ? -5 : 5));
+  }
+});
 
 function baseCell(cc) {
   if (state.bases[cc] === undefined) state.bases[cc] = 64;
@@ -703,19 +876,26 @@ document.addEventListener('input', (e) => {
   if (/^lfos\.\d+\.sync$/.test(p) || el.dataset.rerender !== undefined) render();
   if (/^lfos\.\d+\.retrig$/.test(p) || /^lfos\.\d+\.sync$/.test(p)) resetLfo(Number(p.split('.')[1]));
   if (el.dataset.base) { state.captured[el.dataset.base] = false; baseUi.dirty = true; }
-  if (/^matrix\.\d+\.on$/.test(p) && !v) { /* engine restores the base on its own */ }
+  if (p.startsWith('grid.cells.')) paintPads();
   save();
 });
 
 document.addEventListener('click', (e) => {
+  const pad = e.target.closest('.pad');
+  if (pad) selectPad(pad);
   const id = e.target.id;
+  if (id === 'padClear') clearCell(ui.sel.src, ui.sel.cc);
   if (id === 'logClear') { log.lines = []; log.dirty = true; }
   if (id === 'btnExport') exportPreset();
   if (id === 'btnImport') document.getElementById('importFile').click();
   if (id === 'btnReset' && confirm('Reset all settings to defaults?')) { state = clone(DEFAULT_STATE); save(); render(); }
   if (id === 'btnRestore') restoreKnobs();
-  if (id === 'btnAllOff') { state.matrix.forEach((m) => { m.on = false; }); save(); render(); restoreKnobs(); }
+  if (id === 'btnAllOff') { state.grid.cells = {}; save(); render(); restoreKnobs(); }
 });
+document.addEventListener('toggle', (e) => {
+  const v = e.target.dataset && e.target.dataset.view;
+  if (v) { state.view[v] = e.target.open; save(); }
+}, true);
 document.addEventListener('change', (e) => {
   if (e.target.id === 'logClock') log.showClock = e.target.checked;
   if (e.target.id === 'logOut') log.showOut = e.target.checked;
@@ -762,6 +942,8 @@ const endDrag = () => { if (drag) { drag.k.classList.remove('drag'); drag = null
 document.addEventListener('pointerup', endDrag);
 document.addEventListener('pointercancel', endDrag);
 document.addEventListener('dblclick', (e) => {
+  const pad = e.target.closest('.pad');
+  if (pad) clearCell(pad.dataset.psrc, pad.dataset.cc);
   const k = e.target.closest('.knob');
   if (k) { const inp = k.querySelector('input'); setKnob(inp, inp.dataset.def); }
 });
@@ -805,7 +987,7 @@ function frame() {
     <span>Position</span><span>bar ${bar} beat ${(beat % 4) + 1}</span><span></span>`;
   const st = notes.stats, vs = document.getElementById('velStats'), vh = document.getElementById('velHint');
   if (vs && st.count) {
-    vs.textContent = `${st.count} notes, vel ${st.min} to ${st.max}, ${st.distinct.size} distinct`;
+    vs.textContent = `${st.count} notes, velocity ${st.min} to ${st.max}, ${st.distinct.size} distinct values.`;
     vh.textContent = st.count < 8 ? 'Keep playing to collect more notes.'
       : st.distinct.size === 1 ? 'The S-1 sends a fixed velocity here: use Random/note or Trig tools for per-note variation.'
       : 'The S-1 sends varying velocity: the Velocity source is usable.';
