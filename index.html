@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S-1 ModHub</title>
+<style>
+:root {
+  --bg: #111316; --panel: #1a1d22; --line: #2a2f37; --text: #e6e8eb; --dim: #8b929c;
+  --accent: #ff6a2a; --accent2: #3ec7c2; --warn: #f2c14e; --bad: #ff5470;
+  --radius: 8px; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, -apple-system, sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 2; }
+header h1 { font-size: 16px; margin: 0; letter-spacing: .5px; }
+header h1 b { color: var(--accent); }
+.status { font-family: var(--mono); color: var(--dim); display: flex; gap: 14px; flex-wrap: wrap; }
+.status .on { color: var(--accent2); }
+.spacer { flex: 1; }
+button { background: var(--line); color: var(--text); border: 1px solid #3a414c; border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.danger { border-color: var(--bad); color: var(--bad); }
+main { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; padding: 12px 16px 40px; }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; min-width: 0; }
+section.wide { grid-column: 1 / -1; }
+section h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ctl { display: grid; grid-template-columns: 92px 1fr 62px; align-items: center; gap: 8px; margin: 4px 0; }
+.ctl > span { color: var(--dim); }
+.ctl output { font-family: var(--mono); text-align: right; font-size: 12px; }
+.ctl.chk { grid-template-columns: 92px auto; }
+select, input[type=number] { background: #0d0f12; color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; font: inherit; min-width: 0; width: 100%; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.sub { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 6px; }
+.sub h3 { font-size: 12px; margin: 2px 0 4px; display: flex; justify-content: space-between; align-items: center; }
+.meter { height: 6px; background: #0d0f12; border-radius: 3px; position: relative; overflow: hidden; }
+.meter i { position: absolute; top: 0; bottom: 0; background: var(--accent2); }
+.meter.bi::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #444; }
+.mini { width: 70px; display: inline-block; vertical-align: middle; }
+.matrix { width: 100%; border-collapse: collapse; }
+.matrix th { text-align: left; color: var(--dim); font-weight: normal; font-size: 11px; padding: 2px 4px; }
+.matrix td { padding: 3px 4px; vertical-align: middle; }
+.matrix tr + tr td { border-top: 1px solid var(--line); }
+.matrix .out { font-family: var(--mono); font-size: 12px; width: 120px; }
+.cap { font-size: 10px; color: var(--warn); }
+.cap.ok { color: var(--accent2); }
+#log { font-family: var(--mono); font-size: 11px; height: 220px; overflow: auto; background: #0d0f12; border-radius: 5px; padding: 6px; margin: 6px 0 0; white-space: pre; color: var(--dim); }
+#log .in { color: var(--accent2); } #log .out { color: var(--accent); }
+.note { color: var(--dim); font-size: 12px; }
+.banner { background: #3a1d22; border: 1px solid var(--bad); color: #ffd0d8; padding: 8px 16px; display: none; }
+.srcgrid { display: grid; grid-template-columns: 70px 1fr 44px; gap: 4px 8px; align-items: center; font-size: 12px; }
+.srcgrid span:last-child, .srcgrid .v { font-family: var(--mono); text-align: right; }
+.table-scroll { overflow-x: auto; }
+@media (max-width: 520px) { main { padding: 12px 16px; grid-template-columns: 1fr; } .ctl { grid-template-columns: 80px 1fr 54px; } }
+</style>
+</head>
+<body>
+<div class="banner" id="banner"></div>
+<header>
+  <h1><b>S-1</b> ModHub</h1>
+  <div class="status" id="status"></div>
+  <div class="spacer"></div>
+  <button id="btnRestore" title="Send the base (knob) value of every modulated CC">Restore knobs</button>
+  <button id="btnAllOff" class="danger" title="Disable all matrix slots and restore knobs">All off</button>
+</header>
+<main id="main"></main>
+<input type="file" id="importFile" accept="application/json" hidden>
+
+<script>
+'use strict';
+
+/* ---------- S-1 CC map (from the S-1 v1.02 MIDI implementation chart) ---------- */
+const CC_MAP = [
+  // group, cc, name, kind: 'cont' = continuous, 'step' = stepped values
+  ['Filter', 74, 'Cutoff', 'cont'], ['Filter', 71, 'Resonance', 'cont'], ['Filter', 24, 'Filter env depth', 'cont'],
+  ['Filter', 25, 'Filter LFO depth', 'cont'], ['Filter', 26, 'Filter key follow', 'cont'], ['Filter', 27, 'Filter bend sens', 'cont'],
+  ['Oscillator', 15, 'Pulse width', 'cont'], ['Oscillator', 13, 'Osc LFO depth', 'cont'], ['Oscillator', 19, 'Osc level 1', 'cont'],
+  ['Oscillator', 20, 'Osc level 2', 'cont'], ['Oscillator', 21, 'Sub level', 'cont'], ['Oscillator', 23, 'Noise level', 'cont'],
+  ['Oscillator', 76, 'Fine tune', 'cont'], ['Oscillator', 18, 'Osc bend sens', 'cont'], ['Oscillator', 102, 'Draw multiply', 'cont'],
+  ['Oscillator', 103, 'Chop overtone', 'cont'], ['Oscillator', 104, 'Chop comb', 'cont'],
+  ['Envelope', 73, 'Attack', 'cont'], ['Envelope', 75, 'Decay', 'cont'], ['Envelope', 30, 'Sustain', 'cont'], ['Envelope', 72, 'Release', 'cont'],
+  ['LFO', 3, 'LFO rate', 'cont'], ['LFO', 17, 'LFO mod depth', 'cont'],
+  ['Effects', 91, 'Reverb level', 'cont'], ['Effects', 89, 'Reverb time', 'cont'], ['Effects', 92, 'Delay level', 'cont'], ['Effects', 90, 'Delay time', 'cont'],
+  ['Performance', 5, 'Portamento time', 'cont'], ['Performance', 1, 'Mod wheel', 'cont'], ['Performance', 11, 'Expression', 'cont'], ['Performance', 10, 'Pan', 'cont'],
+  ['Stepped (use small depths)', 12, 'LFO waveform', 'step'], ['Stepped (use small depths)', 14, 'Osc range', 'step'],
+  ['Stepped (use small depths)', 16, 'PWM source', 'step'], ['Stepped (use small depths)', 22, 'Sub octave', 'step'],
+  ['Stepped (use small depths)', 85, 'Chord v2 key shift', 'step'], ['Stepped (use small depths)', 86, 'Chord v3 key shift', 'step'],
+  ['Stepped (use small depths)', 87, 'Chord v4 key shift', 'step'], ['Stepped (use small depths)', 93, 'Chorus', 'step'],
+];
+const CC_NAME = Object.fromEntries(CC_MAP.map(([, cc, n]) => [cc, n]));
+
+/* ---------- Sources and divisions ---------- */
+const SOURCES = [
+  ['lfo1', 'LFO 1', true], ['lfo2', 'LFO 2', true], ['lfo3', 'LFO 3', true], ['lfo4', 'LFO 4', true],
+  ['vel', 'Velocity', false], ['env', 'Note env', false], ['rnd', 'Random/note', true], ['key', 'Key track', true],
+  ['gate', 'Gate', false], ['trig', 'Trig pulse', false], ['trigsh', 'Trig S&H', true],
+];
+const SRC_BIPOLAR = Object.fromEntries(SOURCES.map(([k, , b]) => [k, b]));
+const DIVS = { '4 bars': 16, '2 bars': 8, '1 bar': 4, '1/2': 2, '1/4D': 1.5, '1/4': 1, '1/4T': 2 / 3, '1/8D': .75, '1/8': .5,
+  '1/8T': 1 / 3, '1/16D': .375, '1/16': .25, '1/16T': 1 / 6, '1/32': .125 };
+const SHAPES = { sine: 'Sine', tri: 'Triangle', sawup: 'Saw up', sawdn: 'Saw down', square: 'Square', sh: 'S&H', walk: 'Random walk' };
+const RETRIG = { none: 'Free', note: 'Note on', beat: 'Every beat', bar: 'Every bar', bar2: 'Every 2 bars', bar4: 'Every 4 bars' };
+
+/* ---------- State ---------- */
+const lfoDefault = (i) => ({ shape: ['sine', 'tri', 'sh', 'walk'][i], sync: i % 2 === 0, rate: [2, 0.5, 6, 0.2][i], div: ['1/4', '1 bar', '1/8', '2 bars'][i], phase: 0, retrig: 'none' });
+const DEFAULT_STATE = {
+  midi: { inId: '', outId: '', ch: 3, rate: 300 },
+  clock: { mode: 'auto', bpm: 120 },
+  lfos: [0, 1, 2, 3].map(lfoDefault),
+  vel: { curve: 'lin', min: 0, max: 100, invert: false },
+  env: { mode: 'ad', attack: 5, decay: 250, velAmt: 0 },
+  trig: { div: '1/16', prob: 50, swing: 50, ratchet: 2, ratchetProb: 0, accMin: 40, accMax: 100, decay: 120 },
+  matrix: Array.from({ length: 8 }, (_, i) => ({ on: false, src: ['lfo1', 'vel', 'trig', 'lfo2', 'env', 'rnd', 'key', 'lfo3'][i], dst: [74, 74, 71, 15, 24, 13, 74, 92][i], depth: 20 })),
+  bases: {},
+  captured: {},
+};
+const STORE_KEY = 's1-modhub-v1';
+let state = loadState();
+
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return mergeDefaults(JSON.parse(raw));
+  } catch (e) { /* storage unavailable */ }
+  return clone(DEFAULT_STATE);
+}
+function mergeDefaults(s) {
+  const d = clone(DEFAULT_STATE);
+  for (const k of Object.keys(d)) {
+    if (s[k] === undefined) continue;
+    if (Array.isArray(d[k])) d[k] = d[k].map((v, i) => ({ ...v, ...(s[k][i] || {}) }));
+    else if (typeof d[k] === 'object') d[k] = { ...d[k], ...s[k] };
+  }
+  return d;
+}
+let saveTimer = 0;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }, 300);
+}
+const getPath = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
+function setPath(o, p, v) { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; }
+
+/* ---------- MIDI I/O ---------- */
+const MONITOR_ONLY = '__monitor__';
+let access = null, input = null, output = null;
+const log = { lines: [], dirty: false, showClock: false, showOut: true };
+
+function logLine(dir, text) {
+  if (dir === 'out' && !log.showOut) return;
+  const t = (performance.now() / 1000).toFixed(3).padStart(9);
+  log.lines.push(`<span class="${dir}">${t} ${dir === 'in' ? '<-' : '->'} ${text}</span>`);
+  if (log.lines.length > 200) log.lines.splice(0, log.lines.length - 200);
+  log.dirty = true;
+}
+function send(bytes) {
+  if (output) output.send(bytes);
+  logLine('out', describe(bytes));
+}
+function describe(d) {
+  const st = d[0] & 0xf0, ch = (d[0] & 0x0f) + 1;
+  if (st === 0x90) return `ch${ch} note on  ${d[1]} vel ${d[2]}`;
+  if (st === 0x80) return `ch${ch} note off ${d[1]}`;
+  if (st === 0xb0) return `ch${ch} CC ${d[1]} = ${d[2]}${CC_NAME[d[1]] ? ' (' + CC_NAME[d[1]] + ')' : ''}`;
+  if (d[0] === 0xf8) return 'clock';
+  if (d[0] === 0xfa) return 'START';
+  if (d[0] === 0xfc) return 'STOP';
+  if (d[0] === 0xfb) return 'CONTINUE';
+  return Array.from(d, (b) => b.toString(16).padStart(2, '0')).join(' ');
+}
+
+async function initMidi() {
+  if (!navigator.requestMIDIAccess) {
+    showBanner('Web MIDI is not available in this browser. Use Chrome or Edge (Safari does not support Web MIDI). The engine still runs in monitor-only mode.');
+    return;
+  }
+  try {
+    access = await navigator.requestMIDIAccess({ sysex: false });
+    access.onstatechange = () => { refreshPorts(); };
+    refreshPorts();
+  } catch (e) {
+    showBanner('MIDI access was refused: ' + e.message + '. Allow MIDI for this page and reload.');
+  }
+}
+function showBanner(msg) { const b = document.getElementById('banner'); b.textContent = msg; b.style.display = 'block'; }
+
+function refreshPorts() {
+  const ins = access ? [...access.inputs.values()] : [];
+  const outs = access ? [...access.outputs.values()] : [];
+  const isS1 = (p) => /s-?1\b/i.test(p.name);
+  if (!state.midi.inId || !ins.some((p) => p.id === state.midi.inId)) state.midi.inId = (ins.find(isS1) || {}).id || '';
+  if (!state.midi.outId || (state.midi.outId !== MONITOR_ONLY && !outs.some((p) => p.id === state.midi.outId))) {
+    state.midi.outId = (outs.find(isS1) || {}).id || MONITOR_ONLY;
+  }
+  const inSel = document.querySelector('[data-path="midi.inId"]');
+  const outSel = document.querySelector('[data-path="midi.outId"]');
+  if (inSel) inSel.innerHTML = `<option value="">(none)</option>` + ins.map((p) => `<option value="${p.id}" ${p.id === state.midi.inId ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  if (outSel) outSel.innerHTML = `<option value="${MONITOR_ONLY}">Monitor only (no MIDI out)</option>` + outs.map((p) => `<option value="${p.id}" ${p.id === state.midi.outId ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  bindPorts();
+}
+function bindPorts() {
+  if (input) input.onmidimessage = null;
+  input = access && state.midi.inId ? access.inputs.get(state.midi.inId) || null : null;
+  output = access && state.midi.outId !== MONITOR_ONLY ? access.outputs.get(state.midi.outId) || null : null;
+  if (input) input.onmidimessage = (e) => onMidi(e.data);
+  lastSent.clear();
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- Clock ---------- */
+const clock = { ticks: 0, running: false, lastTickAt: -1e9, intervals: [], bpmExt: 0, intPos: 0, pos: 0, external: false, startFlag: false };
+
+function onClockTick(now) {
+  if (clock.lastTickAt > 0) {
+    const dt = now - clock.lastTickAt;
+    if (dt > 0 && dt < 200) { clock.intervals.push(dt); if (clock.intervals.length > 48) clock.intervals.shift(); }
+  }
+  clock.lastTickAt = now;
+  if (clock.running) clock.ticks++;
+  const avg = clock.intervals.reduce((a, b) => a + b, 0) / (clock.intervals.length || 1);
+  clock.bpmExt = avg ? 60000 / (avg * 24) : 0;
+}
+
+function updateClock(now, dt) {
+  clock.external = state.clock.mode === 'auto' && now - clock.lastTickAt < 500;
+  if (clock.external) {
+    if (clock.running) {
+      const tickMs = clock.bpmExt ? 60000 / (clock.bpmExt * 24) : 20;
+      clock.pos = clock.ticks / 24 + Math.min((now - clock.lastTickAt) / tickMs, 0.999) / 24;
+    }
+  } else {
+    clock.intPos += dt * state.clock.bpm / 60;
+    clock.pos = clock.intPos;
+  }
+}
+
+/* ---------- Note state and sources ---------- */
+const notes = { held: new Set(), lastVel: 100, lastNote: 60, rnd: 0, stats: { count: 0, min: 127, max: 0, distinct: new Set() } };
+const env = { stage: 'idle', level: 0, peak: 1 };
+const trig = { val: 0, sh: 0, lastStep: null, pending: [] };
+const lfoRt = [0, 1, 2, 3].map(() => ({ phase: 0, prev: 0, cur: Math.random() * 2 - 1, val: 0 }));
+const src = Object.fromEntries(SOURCES.map(([k]) => [k, 0]));
+
+function onMidi(d) {
+  const now = performance.now();
+  const st = d[0];
+  if (st === 0xf8) { onClockTick(now); if (log.showClock) logLine('in', 'clock'); return; }
+  if (st === 0xfa) { clock.running = true; clock.ticks = 0; onTransportStart(); logLine('in', 'START'); return; }
+  if (st === 0xfc) { clock.running = false; logLine('in', 'STOP'); return; }
+  if (st >= 0xf0) return;
+  const kind = st & 0xf0, ch = (st & 0x0f) + 1;
+  if (ch !== state.midi.ch) { logLine('in', describe(d) + '  (other channel)'); return; }
+  logLine('in', describe(d));
+  if (kind === 0x90 && d[2] > 0) noteOn(d[1], d[2]);
+  else if (kind === 0x80 || (kind === 0x90 && d[2] === 0)) noteOff(d[1]);
+  else if (kind === 0xb0) onCC(d[1], d[2], now);
+}
+
+function noteOn(n, v) {
+  notes.held.add(n); notes.lastVel = v; notes.lastNote = n; notes.rnd = Math.random() * 2 - 1;
+  const s = notes.stats; s.count++; s.min = Math.min(s.min, v); s.max = Math.max(s.max, v); s.distinct.add(v);
+  const e = state.env;
+  env.peak = 1 - (e.velAmt / 100) * (1 - v / 127);
+  env.stage = 'a';
+  state.lfos.forEach((l, i) => { if (l.retrig === 'note') resetLfo(i); });
+}
+function noteOff(n) {
+  notes.held.delete(n);
+  if (notes.held.size === 0 && state.env.mode === 'asr' && env.stage !== 'idle') env.stage = 'r';
+}
+function resetLfo(i) { const r = lfoRt[i]; r.phase = 0; r.prev = r.cur; r.cur = Math.random() * 2 - 1; }
+function onTransportStart() {
+  trig.pending = []; trig.lastStep = null;
+  state.lfos.forEach((l, i) => { if (l.sync) resetLfo(i); });
+}
+
+function lfoShape(shape, p, r) {
+  switch (shape) {
+    case 'sine': return Math.sin(2 * Math.PI * p);
+    case 'tri': return p < .25 ? 4 * p : p < .75 ? 2 - 4 * p : 4 * p - 4;
+    case 'sawup': return 2 * p - 1;
+    case 'sawdn': return 1 - 2 * p;
+    case 'square': return p < .5 ? 1 : -1;
+    case 'sh': return r.cur;
+    case 'walk': { const t = (1 - Math.cos(Math.PI * r.phase)) / 2; return r.prev + (r.cur - r.prev) * t; }
+  }
+  return 0;
+}
+
+const RETRIG_BEATS = { beat: 1, bar: 4, bar2: 8, bar4: 16 };
+function updateSources(dt, dBeat, prevPos) {
+  // LFOs
+  state.lfos.forEach((l, i) => {
+    const r = lfoRt[i];
+    const rb = RETRIG_BEATS[l.retrig];
+    if (rb && dBeat > 0 && Math.floor(clock.pos / rb) !== Math.floor(prevPos / rb)) resetLfo(i);
+    r.phase += l.sync ? Math.max(dBeat, 0) / DIVS[l.div] : l.rate * dt;
+    if (r.phase >= 1) { r.phase %= 1; r.prev = r.cur; r.cur = Math.random() * 2 - 1; }
+    r.val = lfoShape(l.shape, (r.phase + l.phase / 360) % 1, r);
+    src['lfo' + (i + 1)] = r.val;
+  });
+
+  // Velocity with curve
+  const v = state.vel, x = notes.lastVel / 127;
+  const c = v.curve === 'exp' ? x * x : v.curve === 'log' ? Math.sqrt(x) : v.curve === 's' ? x * x * (3 - 2 * x) : x;
+  let vv = (v.min + (v.max - v.min) * c) / 100;
+  src.vel = v.invert ? 1 - vv : vv;
+
+  // Note envelope
+  const e = state.env;
+  if (env.stage === 'a') {
+    env.level += dt * 1000 / Math.max(1, e.attack);
+    if (env.level >= env.peak) { env.level = env.peak; env.stage = e.mode === 'ad' ? 'd' : 's'; }
+  } else if (env.stage === 's') {
+    env.level = env.peak;
+  } else if (env.stage === 'd' || env.stage === 'r') {
+    env.level -= dt * 1000 / Math.max(1, e.decay);
+    if (env.level <= 0) { env.level = 0; env.stage = 'idle'; }
+  }
+  src.env = env.level;
+  src.rnd = notes.rnd;
+  src.key = Math.max(-1, Math.min(1, (notes.lastNote - 60) / 24));
+  src.gate = notes.held.size ? 1 : 0;
+
+  updateTrig(dt, dBeat);
+  src.trig = trig.val;
+  src.trigsh = trig.sh;
+}
+
+/* ---------- Trig tools: divided, swung, probabilistic pulses with ratchets ---------- */
+function updateTrig(dt, dBeat) {
+  const t = state.trig;
+  const L = DIVS[t.div];
+  if (dBeat > 0) {
+    const k = Math.floor(clock.pos / L);
+    if (trig.lastStep === null) trig.lastStep = k - 1;
+    for (let step = Math.max(trig.lastStep + 1, k - 3); step <= k; step++) {
+      if (Math.random() * 100 >= t.prob) continue;
+      const delay = step % 2 ? L * (2 * t.swing / 100 - 1) : 0;
+      const n = t.ratchet > 1 && Math.random() * 100 < t.ratchetProb ? t.ratchet : 1;
+      const span = (L - delay) / n;
+      for (let r = 0; r < n; r++) trig.pending.push(step * L + delay + r * span);
+    }
+    trig.lastStep = k;
+  }
+  for (let i = trig.pending.length - 1; i >= 0; i--) {
+    if (clock.pos >= trig.pending[i]) {
+      trig.pending.splice(i, 1);
+      trig.val = (t.accMin + Math.random() * (t.accMax - t.accMin)) / 100;
+      trig.sh = Math.random() * 2 - 1;
+    }
+  }
+  trig.val *= Math.exp(-dt * 1000 / Math.max(1, t.decay));
+}
+
+/* ---------- Engine: matrix, CC output with rate limit and echo filter ---------- */
+const lastSent = new Map();     // cc -> value last sent
+const sentHistory = new Map();  // cc -> [{v, t}] for echo filtering
+const outVals = new Map();      // cc -> current computed value (for meters)
+let activeDsts = new Set();
+let tokens = 0, rr = 0, lastTick = performance.now();
+
+function baseOf(cc) { return state.bases[cc] ?? 64; }
+
+function onCC(cc, v, now) {
+  const hist = sentHistory.get(cc) || [];
+  if (hist.some((h) => now - h.t < 200 && Math.abs(h.v - v) <= 1)) return; // echo of our own output
+  state.bases[cc] = v;
+  state.captured[cc] = true;
+  baseUi.dirty = true;
+  save();
+}
+
+function sendCC(cc, v, now) {
+  send([0xb0 | (state.midi.ch - 1), cc, v]);
+  lastSent.set(cc, v);
+  const hist = sentHistory.get(cc) || [];
+  hist.push({ v, t: now });
+  while (hist.length && now - hist[0].t > 200) hist.shift();
+  sentHistory.set(cc, hist);
+}
+
+function tick() {
+  const now = performance.now();
+  const dt = Math.min((now - lastTick) / 1000, 0.05);
+  lastTick = now;
+  const prevPos = clock.pos;
+  updateClock(now, dt);
+  let dBeat = clock.pos - prevPos;
+  if (dBeat < 0) { onTransportStart(); dBeat = 0; }
+  updateSources(dt, dBeat, prevPos);
+
+  // Sum matrix contributions per destination
+  const sums = new Map();
+  for (const m of state.matrix) {
+    if (!m.on || !m.src || !m.dst) continue;
+    const scale = SRC_BIPOLAR[m.src] ? 63.5 : 127;
+    sums.set(m.dst, (sums.get(m.dst) || 0) + src[m.src] * scale * m.depth / 100);
+  }
+  // Destinations no longer modulated go back to their knob value
+  for (const cc of activeDsts) if (!sums.has(cc)) { sums.set(cc, 0); }
+  const nextActive = new Set();
+  for (const [cc, sum] of sums) {
+    const val = Math.max(0, Math.min(127, Math.round(baseOf(cc) + sum)));
+    outVals.set(cc, val);
+    if (state.matrix.some((m) => m.on && m.dst === cc)) nextActive.add(cc);
+    else if (lastSent.get(cc) !== val) nextActive.add(cc); // keep until base restored
+  }
+  activeDsts = nextActive;
+  for (const cc of outVals.keys()) if (!activeDsts.has(cc)) outVals.delete(cc);
+
+  // Token bucket rate limit, round-robin over destinations
+  const rate = state.midi.rate;
+  tokens = Math.min(tokens + rate * dt, Math.max(2, rate * 0.02));
+  const list = [...activeDsts];
+  for (let i = 0; i < list.length && tokens >= 1; i++) {
+    const cc = list[(rr + i) % list.length];
+    const val = outVals.get(cc);
+    if (val !== undefined && lastSent.get(cc) !== val) { sendCC(cc, val, now); tokens--; }
+  }
+  rr = (rr + 1) % Math.max(1, list.length);
+}
+
+function restoreKnobs() {
+  const now = performance.now();
+  const ccs = new Set([...activeDsts, ...state.matrix.filter((m) => m.dst).map((m) => m.dst)]);
+  for (const cc of ccs) if (lastSent.has(cc)) sendCC(cc, baseOf(cc), now);
+}
+
+/* ---------- Timer (Worker so background tabs are not throttled) ---------- */
+function startTimer() {
+  try {
+    const w = new Worker(URL.createObjectURL(new Blob(['let id;onmessage=e=>{clearInterval(id);id=setInterval(()=>postMessage(0),e.data)}'], { type: 'text/javascript' })));
+    w.onmessage = tick;
+    w.postMessage(2);
+  } catch (e) {
+    setInterval(tick, 4);
+  }
+}
+
+/* ---------- UI ---------- */
+const fmt = (f, v) => f === 'hz' ? (v < 1 ? v.toFixed(2) : v.toFixed(1)) + ' Hz' : f === 'ms' ? Math.round(v) + ' ms' : f === '%' ? Math.round(v) + '%'
+  : f === 'deg' ? Math.round(v) + '°' : f === 'sd' ? (v > 0 ? '+' : '') + Math.round(v) : String(v);
+const opts = (o, cur) => Object.entries(o).map(([k, n]) => `<option value="${k}" ${String(k) === String(cur) ? 'selected' : ''}>${esc(n)}</option>`).join('');
+const rng = (label, path, min, max, step = 1, f = '') => {
+  const v = getPath(state, path);
+  return `<label class="ctl"><span>${label}</span><input type="range" data-path="${path}" data-fmt="${f}" min="${min}" max="${max}" step="${step}" value="${v}"><output>${fmt(f, v)}</output></label>`;
+};
+const logRng = (label, path, a, b, f = 'hz') => {
+  const v = getPath(state, path), pos = Math.round(1000 * Math.log(v / a) / Math.log(b / a));
+  return `<label class="ctl"><span>${label}</span><input type="range" data-path="${path}" data-fmt="${f}" data-log="${a},${b}" min="0" max="1000" value="${pos}"><output>${fmt(f, v)}</output></label>`;
+};
+const sel = (label, path, o, num = false) => `<label class="ctl"><span>${label}</span><select data-path="${path}" ${num ? 'data-num' : ''}>${opts(o, getPath(state, path))}</select><output></output></label>`;
+const chk = (label, path) => `<label class="ctl chk"><span>${label}</span><input type="checkbox" data-path="${path}" ${getPath(state, path) ? 'checked' : ''}></label>`;
+const divOpts = Object.fromEntries(Object.keys(DIVS).map((k) => [k, k]));
+
+function dstOptions(cur) {
+  const groups = {};
+  for (const [g, cc, n] of CC_MAP) (groups[g] = groups[g] || []).push([cc, n]);
+  return Object.entries(groups).map(([g, items]) => `<optgroup label="${g}">` +
+    items.map(([cc, n]) => `<option value="${cc}" ${cc === cur ? 'selected' : ''}>${n} (CC${cc})</option>`).join('') + '</optgroup>').join('');
+}
+
+function render() {
+  const s = state;
+  const ch = Object.fromEntries(Array.from({ length: 16 }, (_, i) => [i + 1, 'Ch ' + (i + 1)]));
+  document.getElementById('main').innerHTML = `
+  <section>
+    <h2>MIDI</h2>
+    <label class="ctl"><span>From S-1</span><select data-path="midi.inId"></select><output></output></label>
+    <label class="ctl"><span>To S-1</span><select data-path="midi.outId"></select><output></output></label>
+    ${sel('Channel', 'midi.ch', ch, true)}
+    ${rng('Max rate', 'midi.rate', 50, 1000, 10, '')}
+    <p class="note">Default S-1 synth channel is 3. Max rate is CC messages per second across all destinations.</p>
+    <div class="sub"><h3>Velocity check <span class="note" id="velStats"></span></h3>
+      <p class="note" id="velHint">Play the S-1 sequencer to see whether it sends varying velocity.</p></div>
+  </section>
+
+  <section>
+    <h2>Clock</h2>
+    ${sel('Source', 'clock.mode', { auto: 'Follow S-1 (auto)', internal: 'Internal only' })}
+    ${rng('Internal BPM', 'clock.bpm', 40, 240, 1, '')}
+    <p class="note">Auto follows the S-1's MIDI clock when it is received, and falls back to the internal BPM when it isn't.</p>
+    <div class="srcgrid" id="clockInfo"></div>
+  </section>
+
+  <section>
+    <h2>Sources <span class="note">live</span></h2>
+    <div class="srcgrid">${SOURCES.map(([k, n, bi]) => `<span>${n}</span><div class="meter ${bi ? 'bi' : ''}"><i data-src="${k}"></i></div><span class="v" data-srcv="${k}"></span>`).join('')}</div>
+  </section>
+
+  <section class="wide">
+    <h2>Mod matrix <span class="note">output = knob value + sum of (source × depth)</span></h2>
+    <div class="table-scroll"><table class="matrix">
+      <tr><th>On</th><th>Source</th><th>Destination</th><th>Depth</th><th>Knob (base)</th><th>Output</th></tr>
+      ${s.matrix.map((m, i) => `<tr>
+        <td><input type="checkbox" data-path="matrix.${i}.on" ${m.on ? 'checked' : ''}></td>
+        <td><select data-path="matrix.${i}.src">${opts(Object.fromEntries(SOURCES.map(([k, n]) => [k, n])), m.src)}</select></td>
+        <td><select data-path="matrix.${i}.dst" data-num data-rerender>${dstOptions(m.dst)}</select></td>
+        <td><label class="ctl" style="grid-template-columns:1fr 44px;margin:0"><input type="range" data-path="matrix.${i}.depth" data-fmt="sd" min="-100" max="100" value="${m.depth}"><output>${fmt('sd', m.depth)}</output></label></td>
+        <td>${baseCell(m.dst)}</td>
+        <td class="out"><div class="meter"><i data-out="${m.dst}"></i></div><span data-outv="${m.dst}"></span></td>
+      </tr>`).join('')}
+    </table></div>
+    <p class="note">Base = the S-1 knob position. Turn the knob on the S-1 and the base follows ("captured"). Until then it assumes 64; set it here to match the panel.</p>
+  </section>
+
+  ${s.lfos.map((l, i) => `<section>
+    <h2>LFO ${i + 1} <span class="mini"><span class="meter bi"><i data-src="lfo${i + 1}"></i></span></span></h2>
+    ${sel('Shape', `lfos.${i}.shape`, SHAPES)}
+    ${chk('Sync to clock', `lfos.${i}.sync`)}
+    ${l.sync ? sel('Division', `lfos.${i}.div`, divOpts) : logRng('Rate', `lfos.${i}.rate`, 0.01, 50)}
+    ${rng('Phase', `lfos.${i}.phase`, 0, 359, 1, 'deg')}
+    ${sel('Retrigger', `lfos.${i}.retrig`, RETRIG)}
+  </section>`).join('')}
+
+  <section>
+    <h2>Velocity</h2>
+    ${sel('Curve', 'vel.curve', { lin: 'Linear', exp: 'Exponential', log: 'Logarithmic', s: 'S-curve' })}
+    ${rng('Min', 'vel.min', 0, 100, 1, '%')}
+    ${rng('Max', 'vel.max', 0, 100, 1, '%')}
+    ${chk('Invert', 'vel.invert')}
+  </section>
+
+  <section>
+    <h2>Note envelope</h2>
+    ${sel('Mode', 'env.mode', { ad: 'AD (one-shot)', asr: 'ASR (hold while gate)' })}
+    ${logRng('Attack', 'env.attack', 1, 5000, 'ms')}
+    ${logRng('Decay/Rel', 'env.decay', 5, 10000, 'ms')}
+    ${rng('Vel amount', 'env.velAmt', 0, 100, 1, '%')}
+  </section>
+
+  <section>
+    <h2>Trig tools</h2>
+    ${sel('Division', 'trig.div', divOpts)}
+    ${rng('Probability', 'trig.prob', 0, 100, 1, '%')}
+    ${rng('Swing', 'trig.swing', 50, 75, 1, '%')}
+    ${rng('Ratchets', 'trig.ratchet', 1, 4, 1, '')}
+    ${rng('Ratchet prob', 'trig.ratchetProb', 0, 100, 1, '%')}
+    ${rng('Accent min', 'trig.accMin', 0, 100, 1, '%')}
+    ${rng('Accent max', 'trig.accMax', 0, 100, 1, '%')}
+    ${logRng('Pulse decay', 'trig.decay', 5, 2000, 'ms')}
+    <p class="note">Fires "Trig pulse" (decaying accent) and "Trig S&H" (new random value) on clocked steps. Route them in the matrix.</p>
+  </section>
+
+  <section class="wide">
+    <h2>MIDI monitor
+      <span>
+        <label><input type="checkbox" id="logClock"> clock</label>
+        <label><input type="checkbox" id="logOut" ${log.showOut ? 'checked' : ''}> outgoing</label>
+        <button id="logClear">Clear</button>
+        <button id="btnExport">Export preset</button>
+        <button id="btnImport">Import preset</button>
+        <button id="btnReset">Reset to defaults</button>
+      </span></h2>
+    <div id="log"></div>
+  </section>`;
+  refreshPorts();
+  log.dirty = true;
+}
+
+function baseCell(cc) {
+  if (state.bases[cc] === undefined) state.bases[cc] = 64;
+  const cap = state.captured[cc];
+  return `<label class="ctl" style="grid-template-columns:1fr 34px;margin:0"><input type="range" data-path="bases.${cc}" data-base="${cc}" min="0" max="127" value="${state.bases[cc]}"><output>${state.bases[cc]}</output></label>
+    <span class="cap ${cap ? 'ok' : ''}">${cap ? 'captured from S-1' : 'not captured'}</span>`;
+}
+
+/* Generic binding: any input with data-path writes into state */
+document.addEventListener('input', (e) => {
+  const el = e.target, p = el.dataset && el.dataset.path;
+  if (!p) return;
+  let v;
+  if (el.type === 'checkbox') v = el.checked;
+  else if (el.dataset.log) { const [a, b] = el.dataset.log.split(',').map(Number); v = a * Math.pow(b / a, el.value / 1000); }
+  else if (el.type === 'range' || el.type === 'number' || el.dataset.num !== undefined) v = Number(el.value);
+  else v = el.value;
+  setPath(state, p, v);
+  const out = el.nextElementSibling;
+  if (out && out.tagName === 'OUTPUT') out.textContent = fmt(el.dataset.fmt, v);
+  if (p === 'midi.inId' || p === 'midi.outId') bindPorts();
+  if (/^lfos\.\d+\.sync$/.test(p) || el.dataset.rerender !== undefined) render();
+  if (/^lfos\.\d+\.retrig$/.test(p) || /^lfos\.\d+\.sync$/.test(p)) resetLfo(Number(p.split('.')[1]));
+  if (el.dataset.base) { state.captured[el.dataset.base] = false; baseUi.dirty = true; }
+  if (/^matrix\.\d+\.on$/.test(p) && !v) { /* engine restores the base on its own */ }
+  save();
+});
+
+document.addEventListener('click', (e) => {
+  const id = e.target.id;
+  if (id === 'logClear') { log.lines = []; log.dirty = true; }
+  if (id === 'btnExport') exportPreset();
+  if (id === 'btnImport') document.getElementById('importFile').click();
+  if (id === 'btnReset' && confirm('Reset all settings to defaults?')) { state = clone(DEFAULT_STATE); save(); render(); }
+  if (id === 'btnRestore') restoreKnobs();
+  if (id === 'btnAllOff') { state.matrix.forEach((m) => { m.on = false; }); save(); render(); restoreKnobs(); }
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'logClock') log.showClock = e.target.checked;
+  if (e.target.id === 'logOut') log.showOut = e.target.checked;
+});
+document.getElementById('importFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try { state = mergeDefaults(JSON.parse(await f.text())); save(); render(); } catch (err) { alert('Invalid preset file: ' + err.message); }
+  e.target.value = '';
+});
+function exportPreset() {
+  const { midi, ...rest } = state; // ports are machine-specific
+  const blob = new Blob([JSON.stringify({ ...rest, midi: { ch: midi.ch, rate: midi.rate } }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 's1-modhub-preset.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* Live meters at display rate */
+const baseUi = { dirty: false };
+function frame() {
+  for (const el of document.querySelectorAll('[data-src]')) {
+    const k = el.dataset.src, v = src[k] || 0;
+    if (SRC_BIPOLAR[k]) { el.style.left = (50 + Math.min(0, v) * 50) + '%'; el.style.width = Math.abs(v) * 50 + '%'; }
+    else { el.style.left = '0'; el.style.width = v * 100 + '%'; }
+  }
+  for (const el of document.querySelectorAll('[data-srcv]')) el.textContent = (src[el.dataset.srcv] || 0).toFixed(2);
+  for (const el of document.querySelectorAll('[data-out]')) {
+    const v = outVals.get(Number(el.dataset.out));
+    el.style.left = '0'; el.style.width = v === undefined ? '0' : (v / 127 * 100) + '%';
+  }
+  for (const el of document.querySelectorAll('[data-outv]')) {
+    const v = outVals.get(Number(el.dataset.outv));
+    el.textContent = v === undefined ? 'idle' : v;
+  }
+  if (baseUi.dirty) {
+    baseUi.dirty = false;
+    for (const el of document.querySelectorAll('[data-base]')) {
+      const cc = el.dataset.base;
+      if (document.activeElement !== el) { el.value = state.bases[cc]; el.nextElementSibling.textContent = state.bases[cc]; }
+      const cap = el.closest('td').querySelector('.cap');
+      cap.className = 'cap' + (state.captured[cc] ? ' ok' : '');
+      cap.textContent = state.captured[cc] ? 'captured from S-1' : 'not captured';
+    }
+  }
+  const beat = Math.floor(clock.pos), bar = Math.floor(beat / 4) + 1;
+  document.getElementById('status').innerHTML =
+    `<span class="${input ? 'on' : ''}">IN ${input ? esc(input.name) : 'none'}</span>` +
+    `<span class="${output ? 'on' : ''}">OUT ${output ? esc(output.name) : 'monitor only'}</span>` +
+    `<span class="${clock.external ? 'on' : ''}">${clock.external ? 'EXT ' + clock.bpmExt.toFixed(1) : 'INT ' + state.clock.bpm} BPM</span>` +
+    `<span>${bar}.${(beat % 4) + 1}</span>`;
+  const ci = document.getElementById('clockInfo');
+  if (ci) ci.innerHTML = `<span>Source</span><span>${clock.external ? 'S-1 MIDI clock' : 'internal'}</span><span></span>
+    <span>Transport</span><span>${clock.external ? (clock.running ? 'running' : 'stopped') : 'free running'}</span><span></span>
+    <span>Position</span><span>bar ${bar} beat ${(beat % 4) + 1}</span><span></span>`;
+  const st = notes.stats, vs = document.getElementById('velStats'), vh = document.getElementById('velHint');
+  if (vs && st.count) {
+    vs.textContent = `${st.count} notes, vel ${st.min} to ${st.max}, ${st.distinct.size} distinct`;
+    vh.textContent = st.count < 8 ? 'Keep playing to collect more notes.'
+      : st.distinct.size === 1 ? 'The S-1 sends a fixed velocity here: use Random/note or Trig tools for per-note variation.'
+      : 'The S-1 sends varying velocity: the Velocity source is usable.';
+  }
+  if (log.dirty) {
+    log.dirty = false;
+    const el = document.getElementById('log');
+    if (el) { const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20; el.innerHTML = log.lines.join('\n'); if (atBottom) el.scrollTop = el.scrollHeight; }
+  }
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener('beforeunload', restoreKnobs);
+render();
+initMidi();
+startTimer();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
