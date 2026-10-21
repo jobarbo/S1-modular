@@ -6,58 +6,169 @@
 <title>S-1 ModHub</title>
 <style>
 :root {
-  --bg: #111316; --panel: #1a1d22; --line: #2a2f37; --text: #e6e8eb; --dim: #8b929c;
+  --bg: #0b0c0e; --panel: #1b1d21; --line: #2c3037; --edge: #3a3f48; --text: #d9dce1; --dim: #7d8590;
   --accent: #ff6a2a; --accent2: #3ec7c2; --warn: #f2c14e; --bad: #ff5470;
-  --radius: 8px; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --lcd-bg: #08100d; --lcd: #7dffb0; --lcd-dim: #3a7a58;
+  --radius: 6px; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, -apple-system, sans-serif; }
-header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 2; }
-header h1 { font-size: 16px; margin: 0; letter-spacing: .5px; }
-header h1 b { color: var(--accent); }
-.status { font-family: var(--mono); color: var(--dim); display: flex; gap: 14px; flex-wrap: wrap; }
-.status .on { color: var(--accent2); }
+body {
+  margin: 0; color: var(--text); font: 12px/1.4 system-ui, -apple-system, sans-serif;
+  background: repeating-linear-gradient(0deg, #0e1013 0 2px, #0b0c0e 2px 4px);
+}
+
+/* ---- top bar ---- */
+header {
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: center; padding: 10px 16px; position: sticky; top: 0; z-index: 2;
+  background: linear-gradient(180deg, #24272c, #17191d); border-bottom: 1px solid #000; box-shadow: 0 4px 12px #000a, inset 0 1px 0 #ffffff14;
+}
+.brand { display: flex; align-items: baseline; gap: 8px; }
+.brand b { font-size: 20px; letter-spacing: 1px; color: var(--accent); text-shadow: 0 0 10px #ff6a2a66; }
+.brand span { font-size: 11px; letter-spacing: 4px; color: #aab0b9; }
+.lcd, .status {
+  background: var(--lcd-bg); border: 1px solid #000; border-radius: 3px; padding: 5px 10px;
+  box-shadow: inset 0 2px 6px #000, 0 1px 0 #ffffff14;
+}
+.status { font-family: var(--mono); font-size: 12px; color: var(--lcd-dim); display: flex; gap: 16px; flex-wrap: wrap; text-transform: uppercase; }
+.status .on { color: var(--lcd); text-shadow: 0 0 6px #7dffb088; }
 .spacer { flex: 1; }
-button { background: var(--line); color: var(--text); border: 1px solid #3a414c; border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
-button:hover { border-color: var(--accent); }
-button.danger { border-color: var(--bad); color: var(--bad); }
-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; padding: 12px 16px 40px; }
-section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; min-width: 0; }
+button {
+  background: linear-gradient(180deg, #3a3e45, #25282d); color: var(--text); border: 1px solid #000; border-radius: 4px;
+  padding: 5px 11px; font: 600 11px/1.2 system-ui, sans-serif; letter-spacing: .8px; text-transform: uppercase; cursor: pointer;
+  box-shadow: inset 0 1px 0 #ffffff22, 0 2px 3px #0008;
+}
+button:hover { color: #fff; box-shadow: inset 0 1px 0 #ffffff22, 0 2px 3px #0008, 0 0 0 1px var(--accent); }
+button:active { transform: translateY(1px); box-shadow: inset 0 2px 4px #000a; }
+button.danger { color: var(--bad); }
+
+/* ---- rack ---- */
+main { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; padding: 16px 16px 40px; }
+section {
+  position: relative; min-width: 0; padding: 16px 16px 12px; border: 1px solid #000; border-radius: var(--radius);
+  background: linear-gradient(180deg, #212429, #181a1e);
+  box-shadow: inset 0 1px 0 #ffffff14, inset 0 0 0 1px #0004, 0 8px 18px #000a;
+}
+section::before {
+  content: ""; position: absolute; inset: 5px; pointer-events: none;
+  background:
+    radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 0 0 / 8px 8px no-repeat,
+    radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 100% 0 / 8px 8px no-repeat,
+    radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 0 100% / 8px 8px no-repeat,
+    radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 100% 100% / 8px 8px no-repeat;
+}
 section.wide { grid-column: 1 / -1; }
-section h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.ctl { display: grid; grid-template-columns: 92px 1fr 62px; align-items: center; gap: 8px; margin: 4px 0; }
-.ctl > span { color: var(--dim); }
-.ctl output { font-family: var(--mono); text-align: right; font-size: 12px; }
-.ctl.chk { grid-template-columns: 92px auto; }
-select, input[type=number] { background: #0d0f12; color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; font: inherit; min-width: 0; width: 100%; }
-input[type=range] { width: 100%; accent-color: var(--accent); }
-.sub { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 6px; }
-.sub h3 { font-size: 12px; margin: 2px 0 4px; display: flex; justify-content: space-between; align-items: center; }
-.meter { height: 6px; background: #0d0f12; border-radius: 3px; position: relative; overflow: hidden; }
-.meter i { position: absolute; top: 0; bottom: 0; background: var(--accent2); }
-.meter.bi::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #444; }
+section h2 {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #b4bac3; margin: 0 0 12px;
+  display: flex; align-items: center; gap: 8px; text-shadow: 0 1px 0 #000;
+}
+section h2::before { content: ""; width: 6px; height: 6px; border-radius: 1px; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+section h2::after { content: ""; order: 1; flex: 1; height: 1px; background: linear-gradient(90deg, var(--edge), transparent); }
+section h2 > * { order: 2; }
+section h2 .note, section h2 label { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px 10px; margin-bottom: 8px; }
+.fld { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--dim); text-shadow: 0 1px 0 #000; }
+.knobs { display: flex; flex-wrap: wrap; gap: 14px 6px; margin: 6px 0; }
+
+/* ---- LCD selectors ---- */
+select, input[type=number] {
+  appearance: none; width: 100%; min-width: 0; font: 11px var(--mono); color: var(--lcd); background-color: var(--lcd-bg);
+  border: 1px solid #000; border-radius: 3px; padding: 5px 22px 5px 7px; box-shadow: inset 0 2px 5px #000;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%237dffb0'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 7px center; cursor: pointer; text-overflow: ellipsis;
+}
+select:hover, select:focus-visible { outline: none; box-shadow: inset 0 2px 5px #000, 0 0 0 1px var(--lcd-dim); }
+option, optgroup { background: #0e1512; color: var(--lcd); }
+
+/* ---- rotary knobs ---- */
+.knob {
+  --a: 0deg; --b: calc(var(--p) * 270deg);
+  position: relative; width: 62px; display: flex; flex-direction: column; align-items: center; gap: 5px; touch-action: none; cursor: ns-resize; user-select: none;
+}
+.knob.bi { --a: calc(min(var(--p), .5) * 270deg); --b: calc(max(var(--p), .5) * 270deg); }
+.knob .lbl { text-align: center; line-height: 1.1; min-height: 11px; }
+.dial {
+  position: relative; width: 40px; height: 40px; margin: 5px 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #5a5f69, #2a2d33 55%, #1b1d21);
+  border: 1px solid #000; box-shadow: 0 3px 5px #000c, inset 0 1px 0 #ffffff30;
+}
+.dial::before {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%; pointer-events: none;
+  background:
+    conic-gradient(from -135deg, transparent 0 var(--a), var(--accent) var(--a) var(--b), transparent var(--b) 360deg),
+    conic-gradient(from -135deg, #2d3138 0 270deg, transparent 270deg);
+  -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  mask: radial-gradient(circle closest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+}
+.dial i { position: absolute; inset: 0; transform: rotate(calc(-135deg + var(--p) * 270deg)); }
+.dial i::before { content: ""; position: absolute; left: 50%; top: 3px; width: 3px; height: 13px; margin-left: -1.5px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 5px #ff6a2a99; }
+.knob:hover .dial { background: radial-gradient(circle at 35% 28%, #666b76, #30343b 55%, #1d2024); }
+.knob.drag .dial::before, .knob:focus-within .dial::before { filter: drop-shadow(0 0 4px var(--accent)); }
+.knob input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.knob output {
+  display: block; width: 100%; text-align: center; font: 10px/1.5 var(--mono); color: var(--lcd); background: var(--lcd-bg);
+  border: 1px solid #000; border-radius: 2px; box-shadow: inset 0 1px 3px #000; white-space: nowrap;
+}
+.knob.sm { width: 46px; gap: 3px; }
+.knob.sm .dial { width: 28px; height: 28px; margin: 4px 0; }
+.knob.sm .dial::before { inset: -4px; }
+.knob.sm .dial i::before { height: 9px; top: 2px; width: 2px; margin-left: -1px; }
+.knob.sm output { font-size: 9.5px; }
+
+/* ---- LED push-switches ---- */
+.tog {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; position: relative;
+  padding: 5px 9px; border: 1px solid #000; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--dim);
+  background: linear-gradient(180deg, #34383e, #23262b); box-shadow: inset 0 1px 0 #ffffff1c, 0 2px 3px #0008;
+}
+.tog input { position: absolute; opacity: 0; pointer-events: none; }
+.tog .led { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #3a1d12; box-shadow: inset 0 0 0 1px #000, inset 0 1px 2px #000; }
+.tog:has(input:checked) { color: var(--text); }
+.tog input:checked + .led { background: var(--accent); box-shadow: 0 0 8px var(--accent), inset 0 0 0 1px #0005; }
+.tog:has(input:focus-visible) { box-shadow: 0 0 0 1px var(--accent); }
+.tog.solo { padding: 6px; }
+
+/* ---- LED meters ---- */
+.meter { display: block; height: 8px; background: var(--lcd-bg); border: 1px solid #000; border-radius: 2px; position: relative; overflow: hidden; box-shadow: inset 0 1px 3px #000; }
+.meter i { position: absolute; top: 0; bottom: 0; background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.meter::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 4px, var(--lcd-bg) 4px 5px); }
+.meter.bi::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #5a6a63; z-index: 1; }
+.out .meter i { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 .mini { width: 70px; display: inline-block; vertical-align: middle; }
-.matrix { width: 100%; border-collapse: collapse; }
-.matrix th { text-align: left; color: var(--dim); font-weight: normal; font-size: 11px; padding: 2px 4px; }
-.matrix td { padding: 3px 4px; vertical-align: middle; }
-.matrix tr + tr td { border-top: 1px solid var(--line); }
-.matrix .out { font-family: var(--mono); font-size: 12px; width: 120px; }
-.cap { font-size: 10px; color: var(--warn); }
-.cap.ok { color: var(--accent2); }
-#log { font-family: var(--mono); font-size: 11px; height: 220px; overflow: auto; background: #0d0f12; border-radius: 5px; padding: 6px; margin: 6px 0 0; white-space: pre; color: var(--dim); }
-#log .in { color: var(--accent2); } #log .out { color: var(--accent); }
-.note { color: var(--dim); font-size: 12px; }
-.banner { background: #3a1d22; border: 1px solid var(--bad); color: #ffd0d8; padding: 8px 16px; display: none; }
-.srcgrid { display: grid; grid-template-columns: 70px 1fr 44px; gap: 4px 8px; align-items: center; font-size: 12px; }
-.srcgrid span:last-child, .srcgrid .v { font-family: var(--mono); text-align: right; }
+
+/* ---- matrix ---- */
+.matrix { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+.matrix th { text-align: left; font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); padding: 0 6px 2px; text-shadow: 0 1px 0 #000; }
+.matrix td { padding: 4px 6px; vertical-align: middle; background: #14161a; }
+.matrix td:first-child { border-radius: 4px 0 0 4px; }
+.matrix td:last-child { border-radius: 0 4px 4px 0; }
+.matrix .out { font-family: var(--mono); font-size: 11px; width: 130px; color: var(--lcd); }
+.matrix .out .meter { margin-bottom: 3px; }
+.matrix td .knob { margin: 0 auto; }
+.cap { display: block; text-align: center; font-size: 9px; color: var(--warn); letter-spacing: .3px; }
+.cap.ok { color: var(--lcd); }
+.srcgrid { display: grid; grid-template-columns: 78px 1fr 44px; gap: 6px 10px; align-items: center; font-size: 11px; }
+.srcgrid > span:nth-child(3n+1) { font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+.srcgrid span:last-child, .srcgrid .v { font-family: var(--mono); text-align: right; color: var(--lcd); }
 .table-scroll { overflow-x: auto; }
-@media (max-width: 520px) { main { padding: 12px 16px; grid-template-columns: 1fr; } .ctl { grid-template-columns: 80px 1fr 54px; } }
+
+/* ---- monitor ---- */
+#log {
+  font-family: var(--mono); font-size: 11px; height: 220px; overflow: auto; background: var(--lcd-bg); border: 1px solid #000; border-radius: 3px;
+  padding: 8px; margin: 6px 0 0; white-space: pre; color: var(--lcd-dim); box-shadow: inset 0 2px 8px #000;
+}
+#log .in { color: var(--lcd); } #log .out { color: var(--accent); }
+.note { color: var(--dim); font-size: 11px; margin: 6px 0 0; }
+.banner { background: #3a1d22; border: 1px solid var(--bad); color: #ffd0d8; padding: 8px 16px; display: none; }
+.monbtns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 520px) { main { padding: 12px 16px; grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="banner" id="banner"></div>
 <header>
-  <h1><b>S-1</b> ModHub</h1>
+  <div class="brand"><b>S-1</b><span>MODHUB</span></div>
   <div class="status" id="status"></div>
   <div class="spacer"></div>
   <button id="btnRestore" title="Send the base (knob) value of every modulated CC">Restore knobs</button>
@@ -443,16 +554,21 @@ function startTimer() {
 const fmt = (f, v) => f === 'hz' ? (v < 1 ? v.toFixed(2) : v.toFixed(1)) + ' Hz' : f === 'ms' ? Math.round(v) + ' ms' : f === '%' ? Math.round(v) + '%'
   : f === 'deg' ? Math.round(v) + '°' : f === 'sd' ? (v > 0 ? '+' : '') + Math.round(v) : String(v);
 const opts = (o, cur) => Object.entries(o).map(([k, n]) => `<option value="${k}" ${String(k) === String(cur) ? 'selected' : ''}>${esc(n)}</option>`).join('');
-const rng = (label, path, min, max, step = 1, f = '') => {
-  const v = getPath(state, path);
-  return `<label class="ctl"><span>${label}</span><input type="range" data-path="${path}" data-fmt="${f}" min="${min}" max="${max}" step="${step}" value="${v}"><output>${fmt(f, v)}</output></label>`;
+function knob({ label, path, min, max, step = 1, f = '', value, shown = value, log = '', def, cls = '', extra = '' }) {
+  const p = (value - min) / (max - min);
+  return `<div class="knob ${f === 'sd' ? 'bi' : ''} ${cls}" style="--p:${p}">${label ? `<span class="lbl">${label}</span>` : ''}<div class="dial"><i></i></div>` +
+    `<input type="range" data-path="${path}" data-fmt="${f}" ${log ? `data-log="${log}"` : ''} data-def="${def}" ${extra} min="${min}" max="${max}" step="${step}" value="${value}"><output>${fmt(f, shown)}</output></div>`;
+}
+const rng = (label, path, min, max, step = 1, f = '', cls = '', extra = '') => {
+  const v = getPath(state, path), d = getPath(DEFAULT_STATE, path);
+  return knob({ label, path, min, max, step, f, value: v, def: d ?? (path.startsWith('bases.') ? 64 : (min + max) / 2), cls, extra });
 };
 const logRng = (label, path, a, b, f = 'hz') => {
-  const v = getPath(state, path), pos = Math.round(1000 * Math.log(v / a) / Math.log(b / a));
-  return `<label class="ctl"><span>${label}</span><input type="range" data-path="${path}" data-fmt="${f}" data-log="${a},${b}" min="0" max="1000" value="${pos}"><output>${fmt(f, v)}</output></label>`;
+  const pos = (x) => Math.round(1000 * Math.log(x / a) / Math.log(b / a)), v = getPath(state, path), d = getPath(DEFAULT_STATE, path);
+  return knob({ label, path, min: 0, max: 1000, f, value: pos(v), shown: v, log: `${a},${b}`, def: d ? pos(d) : 500 });
 };
-const sel = (label, path, o, num = false) => `<label class="ctl"><span>${label}</span><select data-path="${path}" ${num ? 'data-num' : ''}>${opts(o, getPath(state, path))}</select><output></output></label>`;
-const chk = (label, path) => `<label class="ctl chk"><span>${label}</span><input type="checkbox" data-path="${path}" ${getPath(state, path) ? 'checked' : ''}></label>`;
+const sel = (label, path, o, num = false) => `<label class="fld"><span class="lbl">${label}</span><select data-path="${path}" ${num ? 'data-num' : ''}>${opts(o, getPath(state, path))}</select></label>`;
+const chk = (label, path) => `<label class="tog"><input type="checkbox" data-path="${path}" ${getPath(state, path) ? 'checked' : ''}><span class="led"></span>${label}</label>`;
 const divOpts = Object.fromEntries(Object.keys(DIVS).map((k) => [k, k]));
 
 function dstOptions(cur) {
@@ -468,10 +584,12 @@ function render() {
   document.getElementById('main').innerHTML = `
   <section>
     <h2>MIDI</h2>
-    <label class="ctl"><span>From S-1</span><select data-path="midi.inId"></select><output></output></label>
-    <label class="ctl"><span>To S-1</span><select data-path="midi.outId"></select><output></output></label>
-    ${sel('Channel', 'midi.ch', ch, true)}
-    ${rng('Max rate', 'midi.rate', 50, 1000, 10, '')}
+    <div class="fields">
+      <label class="fld"><span class="lbl">From S-1</span><select data-path="midi.inId"></select></label>
+      <label class="fld"><span class="lbl">To S-1</span><select data-path="midi.outId"></select></label>
+      ${sel('Channel', 'midi.ch', ch, true)}
+    </div>
+    <div class="knobs">${rng('Max rate', 'midi.rate', 50, 1000, 10, '')}</div>
     <p class="note">Default S-1 synth channel is 3. Max rate is CC messages per second across all destinations.</p>
     <div class="sub"><h3>Velocity check <span class="note" id="velStats"></span></h3>
       <p class="note" id="velHint">Play the S-1 sequencer to see whether it sends varying velocity.</p></div>
@@ -479,8 +597,8 @@ function render() {
 
   <section>
     <h2>Clock</h2>
-    ${sel('Source', 'clock.mode', { auto: 'Follow S-1 (auto)', internal: 'Internal only' })}
-    ${rng('Internal BPM', 'clock.bpm', 40, 240, 1, '')}
+    <div class="fields">${sel('Source', 'clock.mode', { auto: 'Follow S-1 (auto)', internal: 'Internal only' })}</div>
+    <div class="knobs">${rng('Int. BPM', 'clock.bpm', 40, 240, 1, '')}</div>
     <p class="note">Auto follows the S-1's MIDI clock when it is received, and falls back to the internal BPM when it isn't.</p>
     <div class="srcgrid" id="clockInfo"></div>
   </section>
@@ -493,12 +611,12 @@ function render() {
   <section class="wide">
     <h2>Mod matrix <span class="note">output = knob value + sum of (source × depth)</span></h2>
     <div class="table-scroll"><table class="matrix">
-      <tr><th>On</th><th>Source</th><th>Destination</th><th>Depth</th><th>Knob (base)</th><th>Output</th></tr>
+      <tr><th></th><th>Source</th><th>Destination</th><th>Depth</th><th>Knob (base)</th><th>Output</th></tr>
       ${s.matrix.map((m, i) => `<tr>
-        <td><input type="checkbox" data-path="matrix.${i}.on" ${m.on ? 'checked' : ''}></td>
+        <td><label class="tog solo"><input type="checkbox" data-path="matrix.${i}.on" ${m.on ? 'checked' : ''}><span class="led"></span></label></td>
         <td><select data-path="matrix.${i}.src">${opts(Object.fromEntries(SOURCES.map(([k, n]) => [k, n])), m.src)}</select></td>
         <td><select data-path="matrix.${i}.dst" data-num data-rerender>${dstOptions(m.dst)}</select></td>
-        <td><label class="ctl" style="grid-template-columns:1fr 44px;margin:0"><input type="range" data-path="matrix.${i}.depth" data-fmt="sd" min="-100" max="100" value="${m.depth}"><output>${fmt('sd', m.depth)}</output></label></td>
+        <td>${rng('', `matrix.${i}.depth`, -100, 100, 1, 'sd', 'sm')}</td>
         <td>${baseCell(m.dst)}</td>
         <td class="out"><div class="meter"><i data-out="${m.dst}"></i></div><span data-outv="${m.dst}"></span></td>
       </tr>`).join('')}
@@ -508,47 +626,48 @@ function render() {
 
   ${s.lfos.map((l, i) => `<section>
     <h2>LFO ${i + 1} <span class="mini"><span class="meter bi"><i data-src="lfo${i + 1}"></i></span></span></h2>
-    ${sel('Shape', `lfos.${i}.shape`, SHAPES)}
+    <div class="fields">
+      ${sel('Shape', `lfos.${i}.shape`, SHAPES)}
+      ${sel('Retrigger', `lfos.${i}.retrig`, RETRIG)}
+      ${l.sync ? sel('Division', `lfos.${i}.div`, divOpts) : ''}
+    </div>
+    <div class="knobs">
+      ${l.sync ? '' : logRng('Rate', `lfos.${i}.rate`, 0.01, 50)}
+      ${rng('Phase', `lfos.${i}.phase`, 0, 359, 1, 'deg')}
+    </div>
     ${chk('Sync to clock', `lfos.${i}.sync`)}
-    ${l.sync ? sel('Division', `lfos.${i}.div`, divOpts) : logRng('Rate', `lfos.${i}.rate`, 0.01, 50)}
-    ${rng('Phase', `lfos.${i}.phase`, 0, 359, 1, 'deg')}
-    ${sel('Retrigger', `lfos.${i}.retrig`, RETRIG)}
   </section>`).join('')}
 
   <section>
     <h2>Velocity</h2>
-    ${sel('Curve', 'vel.curve', { lin: 'Linear', exp: 'Exponential', log: 'Logarithmic', s: 'S-curve' })}
-    ${rng('Min', 'vel.min', 0, 100, 1, '%')}
-    ${rng('Max', 'vel.max', 0, 100, 1, '%')}
+    <div class="fields">${sel('Curve', 'vel.curve', { lin: 'Linear', exp: 'Exponential', log: 'Logarithmic', s: 'S-curve' })}</div>
+    <div class="knobs">${rng('Min', 'vel.min', 0, 100, 1, '%')}${rng('Max', 'vel.max', 0, 100, 1, '%')}</div>
     ${chk('Invert', 'vel.invert')}
   </section>
 
   <section>
     <h2>Note envelope</h2>
-    ${sel('Mode', 'env.mode', { ad: 'AD (one-shot)', asr: 'ASR (hold while gate)' })}
-    ${logRng('Attack', 'env.attack', 1, 5000, 'ms')}
-    ${logRng('Decay/Rel', 'env.decay', 5, 10000, 'ms')}
-    ${rng('Vel amount', 'env.velAmt', 0, 100, 1, '%')}
+    <div class="fields">${sel('Mode', 'env.mode', { ad: 'AD (one-shot)', asr: 'ASR (hold while gate)' })}</div>
+    <div class="knobs">${logRng('Attack', 'env.attack', 1, 5000, 'ms')}${logRng('Decay/Rel', 'env.decay', 5, 10000, 'ms')}${rng('Vel amt', 'env.velAmt', 0, 100, 1, '%')}</div>
   </section>
 
   <section>
     <h2>Trig tools</h2>
-    ${sel('Division', 'trig.div', divOpts)}
-    ${rng('Probability', 'trig.prob', 0, 100, 1, '%')}
-    ${rng('Swing', 'trig.swing', 50, 75, 1, '%')}
-    ${rng('Ratchets', 'trig.ratchet', 1, 4, 1, '')}
-    ${rng('Ratchet prob', 'trig.ratchetProb', 0, 100, 1, '%')}
-    ${rng('Accent min', 'trig.accMin', 0, 100, 1, '%')}
-    ${rng('Accent max', 'trig.accMax', 0, 100, 1, '%')}
-    ${logRng('Pulse decay', 'trig.decay', 5, 2000, 'ms')}
+    <div class="fields">${sel('Division', 'trig.div', divOpts)}</div>
+    <div class="knobs">
+      ${rng('Prob', 'trig.prob', 0, 100, 1, '%')}${rng('Swing', 'trig.swing', 50, 75, 1, '%')}
+      ${rng('Ratchets', 'trig.ratchet', 1, 4, 1, '')}${rng('Ratchet %', 'trig.ratchetProb', 0, 100, 1, '%')}
+      ${rng('Acc min', 'trig.accMin', 0, 100, 1, '%')}${rng('Acc max', 'trig.accMax', 0, 100, 1, '%')}
+      ${logRng('Decay', 'trig.decay', 5, 2000, 'ms')}
+    </div>
     <p class="note">Fires "Trig pulse" (decaying accent) and "Trig S&H" (new random value) on clocked steps. Route them in the matrix.</p>
   </section>
 
   <section class="wide">
     <h2>MIDI monitor
-      <span>
-        <label><input type="checkbox" id="logClock"> clock</label>
-        <label><input type="checkbox" id="logOut" ${log.showOut ? 'checked' : ''}> outgoing</label>
+      <span class="monbtns">
+        <label class="tog"><input type="checkbox" id="logClock"><span class="led"></span>clock</label>
+        <label class="tog"><input type="checkbox" id="logOut" ${log.showOut ? 'checked' : ''}><span class="led"></span>outgoing</label>
         <button id="logClear">Clear</button>
         <button id="btnExport">Export preset</button>
         <button id="btnImport">Import preset</button>
@@ -563,8 +682,8 @@ function render() {
 function baseCell(cc) {
   if (state.bases[cc] === undefined) state.bases[cc] = 64;
   const cap = state.captured[cc];
-  return `<label class="ctl" style="grid-template-columns:1fr 34px;margin:0"><input type="range" data-path="bases.${cc}" data-base="${cc}" min="0" max="127" value="${state.bases[cc]}"><output>${state.bases[cc]}</output></label>
-    <span class="cap ${cap ? 'ok' : ''}">${cap ? 'captured from S-1' : 'not captured'}</span>`;
+  return rng('', `bases.${cc}`, 0, 127, 1, '', 'sm', `data-base="${cc}"`) +
+    `<span class="cap ${cap ? 'ok' : ''}">${cap ? 'captured' : 'not captured'}</span>`;
 }
 
 /* Generic binding: any input with data-path writes into state */
@@ -579,6 +698,7 @@ document.addEventListener('input', (e) => {
   setPath(state, p, v);
   const out = el.nextElementSibling;
   if (out && out.tagName === 'OUTPUT') out.textContent = fmt(el.dataset.fmt, v);
+  syncKnob(el);
   if (p === 'midi.inId' || p === 'midi.outId') bindPorts();
   if (/^lfos\.\d+\.sync$/.test(p) || el.dataset.rerender !== undefined) render();
   if (/^lfos\.\d+\.retrig$/.test(p) || /^lfos\.\d+\.sync$/.test(p)) resetLfo(Number(p.split('.')[1]));
@@ -616,6 +736,36 @@ function exportPreset() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/* Rotary knobs: drag vertically (shift = fine), double-click resets, arrow keys work on the hidden range */
+function syncKnob(inp) {
+  const k = inp.closest('.knob');
+  if (k) k.style.setProperty('--p', (inp.value - inp.min) / (inp.max - inp.min));
+}
+function setKnob(inp, v) { inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+let drag = null;
+document.addEventListener('pointerdown', (e) => {
+  const k = e.target.closest('.knob');
+  if (!k) return;
+  const inp = k.querySelector('input');
+  e.preventDefault();
+  inp.focus({ preventScroll: true });
+  k.setPointerCapture(e.pointerId);
+  drag = { k, inp, y: e.clientY, v: Number(inp.value) };
+  k.classList.add('drag');
+});
+document.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const { inp } = drag, range = inp.max - inp.min;
+  setKnob(inp, drag.v + (drag.y - e.clientY) / (e.shiftKey ? 600 : 150) * range);
+});
+const endDrag = () => { if (drag) { drag.k.classList.remove('drag'); drag = null; } };
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+document.addEventListener('dblclick', (e) => {
+  const k = e.target.closest('.knob');
+  if (k) { const inp = k.querySelector('input'); setKnob(inp, inp.dataset.def); }
+});
+
 /* Live meters at display rate */
 const baseUi = { dirty: false };
 function frame() {
@@ -637,10 +787,10 @@ function frame() {
     baseUi.dirty = false;
     for (const el of document.querySelectorAll('[data-base]')) {
       const cc = el.dataset.base;
-      if (document.activeElement !== el) { el.value = state.bases[cc]; el.nextElementSibling.textContent = state.bases[cc]; }
+      if (document.activeElement !== el) { el.value = state.bases[cc]; el.nextElementSibling.textContent = state.bases[cc]; syncKnob(el); }
       const cap = el.closest('td').querySelector('.cap');
       cap.className = 'cap' + (state.captured[cc] ? ' ok' : '');
-      cap.textContent = state.captured[cc] ? 'captured from S-1' : 'not captured';
+      cap.textContent = state.captured[cc] ? 'captured' : 'not captured';
     }
   }
   const beat = Math.floor(clock.pos), bar = Math.floor(beat / 4) + 1;
