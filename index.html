@@ -8,7 +8,7 @@
 :root {
   --bg: #0b0c0e; --panel: #1b1d21; --line: #2c3037; --edge: #3a3f48; --text: #d9dce1; --dim: #7d8590;
   --accent: #ff6a2a; --accent2: #3ec7c2; --warn: #f2c14e; --bad: #ff5470;
-  --lcd-bg: #020304; --lcd: #dff0ff; --lcd-dim: #5d6873;
+  --lcd-bg: #08100d; --lcd: #7dffb0; --lcd-dim: #3a7a58;
   --radius: 6px; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 * { box-sizing: border-box; }
@@ -30,7 +30,7 @@ header {
   box-shadow: inset 0 2px 6px #000, 0 1px 0 #ffffff14;
 }
 .status { font-family: var(--mono); font-size: 12px; color: var(--lcd-dim); display: flex; gap: 16px; flex-wrap: wrap; text-transform: uppercase; }
-.status .on { color: var(--lcd); text-shadow: 0 0 6px #9fc7ff88; }
+.status .on { color: var(--lcd); text-shadow: 0 0 6px #7dffb088; }
 .spacer { flex: 1; }
 button {
   background: linear-gradient(180deg, #3a3e45, #25282d); color: var(--text); border: 1px solid #000; border-radius: 4px;
@@ -57,24 +57,59 @@ details[open] > summary.zone-h::before { transform: rotate(90deg); }
 details.zone > :not(summary) { margin-top: 12px; }
 .row { display: grid; gap: 14px; }
 .r3 { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .8fr); }
-.r4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.rmods { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 2fr); }
 @media (max-width: 1100px) {
   .r3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .r3 > :last-child { grid-column: 1 / -1; }
-  .r4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rmods { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rmods > :last-child { grid-column: 1 / -1; }
 }
-@media (max-width: 600px) { .r3, .r4, .rmods { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .r3 { grid-template-columns: minmax(0, 1fr); } }
 .btngroup { display: flex; align-items: center; gap: 6px; padding-left: 12px; border-left: 1px solid #000; box-shadow: -1px 0 0 #ffffff10; }
 .btngroup .lbl { margin-right: 2px; }
 .knobrow { display: flex; align-items: flex-start; gap: 14px; }
 .knobrow .note, .knobrow .srcgrid { flex: 1; margin-top: 18px; }
-.lforow { display: flex; align-items: flex-end; gap: 6px; margin-top: 6px; }
-.lforow .tog { margin-left: auto; margin-bottom: 30px; }
-.divslot { width: 92px; margin-bottom: 26px; }
-.kgroup { display: flex; flex-direction: column; gap: 4px; padding: 6px 8px 4px; border-radius: 5px; background: #ffffff05; box-shadow: inset 0 0 0 1px #ffffff0a; }
-.kgroup > div { display: flex; gap: 4px; }
-.kgroup > .lbl { text-align: center; color: #9aa1ab; }
+/* Modulator modules: each module is a subgrid of its row (title / selectors / knobs / footer line up
+   across modules), and knobs sit on fixed 62px columns inside the module. */
+/* One shared 12-column grid for every modulator. Each area spans 4 rows (title / selectors / knobs / footer)
+   so the module subgrids line up; areas change with the available width. */
+.mods {
+  display: grid; gap: 12px 14px; grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "l1 l1 l1 l2 l2 l2 l3 l3 l3 l4 l4 l4" "l1 l1 l1 l2 l2 l2 l3 l3 l3 l4 l4 l4" "l1 l1 l1 l2 l2 l2 l3 l3 l3 l4 l4 l4" "l1 l1 l1 l2 l2 l2 l3 l3 l3 l4 l4 l4"
+    "vel vel vel env env env trig trig trig trig trig trig" "vel vel vel env env env trig trig trig trig trig trig" "vel vel vel env env env trig trig trig trig trig trig" "vel vel vel env env env trig trig trig trig trig trig";
+}
+@media (max-width: 1100px) {
+  .mods {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      "l1 l1 l1 l2 l2 l2" "l1 l1 l1 l2 l2 l2" "l1 l1 l1 l2 l2 l2" "l1 l1 l1 l2 l2 l2"
+      "l3 l3 l3 l4 l4 l4" "l3 l3 l3 l4 l4 l4" "l3 l3 l3 l4 l4 l4" "l3 l3 l3 l4 l4 l4"
+      "vel vel vel env env env" "vel vel vel env env env" "vel vel vel env env env" "vel vel vel env env env"
+      "trig trig trig trig trig trig" "trig trig trig trig trig trig" "trig trig trig trig trig trig" "trig trig trig trig trig trig";
+  }
+}
+@media (max-width: 600px) {
+  .mods {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "l1" "l1" "l1" "l1" "l2" "l2" "l2" "l2" "l3" "l3" "l3" "l3" "l4" "l4" "l4" "l4"
+      "vel" "vel" "vel" "vel" "env" "env" "env" "env" "trig" "trig" "trig" "trig";
+  }
+}
+.mods > section { display: grid; grid-template-rows: subgrid; row-gap: 12px; }
+.mods > section > h2 { margin: 0; }
+.msel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.msel > :only-child { grid-column: 1 / -1; }
+.kgrid { --kw: 62px; display: grid; grid-template-columns: repeat(auto-fill, var(--kw)); gap: 10px 8px; align-items: start; }
+.kslot { grid-column: span 1; display: flex; flex-direction: column; align-items: center; }
+.kslot .fld { width: var(--kw); align-items: center; gap: 0; }
+.kslot .lbl { min-height: 11px; line-height: 1.1; }
+.kslot select { margin-top: 15px; padding: 5px 14px 5px 5px; background-position: right 4px center; font-size: 10.5px; }
+.kgroup { grid-column: span var(--n); display: grid; grid-template-columns: subgrid; row-gap: 6px; }
+.kgroup > .lbl { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; color: #9aa1ab; }
+.kgroup > .lbl::before, .kgroup > .lbl::after { content: ""; flex: 1; height: 5px; border-top: 1px solid var(--edge); }
+.kgroup > .lbl::before { border-left: 1px solid var(--edge); }
+.kgroup > .lbl::after { border-right: 1px solid var(--edge); }
+.mfoot { display: flex; align-items: center; gap: 10px; min-height: 0; padding-top: 10px; border-top: 1px solid #00000080; box-shadow: inset 0 1px 0 #ffffff08; }
+.mfoot:empty { border: 0; box-shadow: none; padding: 0; }
+.mfoot .note { margin: 0; }
 .knobs .tog { align-self: center; }
 section {
   position: relative; min-width: 0; padding: 16px 16px 12px; border: 1px solid #000; border-radius: var(--radius);
@@ -107,11 +142,11 @@ section h2 .note, section h2 label { text-transform: none; letter-spacing: 0; fo
 select, input[type=number] {
   appearance: none; width: 100%; min-width: 0; font: 11px var(--mono); color: var(--lcd); background-color: var(--lcd-bg);
   border: 1px solid #000; border-radius: 3px; padding: 5px 22px 5px 7px; box-shadow: inset 0 2px 5px #000;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%23dff0ff'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%237dffb0'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 7px center; cursor: pointer; text-overflow: ellipsis;
 }
 select:hover, select:focus-visible { outline: none; box-shadow: inset 0 2px 5px #000, 0 0 0 1px var(--lcd-dim); }
-option, optgroup { background: #050607; color: var(--lcd); }
+option, optgroup { background: #0e1512; color: var(--lcd); }
 
 /* ---- rotary knobs ---- */
 .knob {
@@ -169,73 +204,66 @@ option, optgroup { background: #050607; color: var(--lcd); }
 .out .meter i { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 .mini { width: 70px; display: inline-block; vertical-align: middle; }
 
-/* ---- matrix: OLED routing grid (sources x destinations) + MATRIX encoder ---- */
-:root { --oled: #e9f3ff; --oled-dim: #5d6873; --oled-bg: #020304; }
-.mxwrap { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
-.mxgrid { flex: 1 1 560px; min-width: 0; padding: 4px; }
-.oled {
-  background: var(--oled-bg); color: var(--oled); font-family: var(--mono); border: 1px solid #000; border-radius: 4px;
-  box-shadow: 0 0 0 3px #0b0c0e, 0 0 0 4px #2c3037, inset 0 0 18px #0d1a2a;
-}
-.matrix { border-collapse: separate; border-spacing: 0; width: 100%; font-family: var(--mono); }
-.matrix tr.scr > * { background: var(--oled-bg); border-bottom: 1px dotted #1f262e; }
-.matrix tr.scr > * + * { border-left: 1px dotted #1f262e; }
-.matrix tr.top > * { border-bottom: 1px solid #39424d; padding: 6px 3px 5px; }
-.matrix tr.top > :first-child { border-top-left-radius: 5px; }
-.matrix tr.top > :last-child { border-top-right-radius: 5px; }
-.matrix tr.bot > * { border-bottom: 0; }
-.matrix tr.bot > :first-child { border-bottom-left-radius: 5px; }
-.matrix tr.bot > :last-child { border-bottom-right-radius: 5px; }
-.matrix th { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); padding: 0; text-shadow: 0 1px 0 #000; vertical-align: middle; }
-.matrix th.rowh { text-align: left; padding: 0 10px 0 8px; white-space: nowrap; }
-.matrix tr.scr th { color: var(--oled); text-shadow: 0 0 4px #9fc7ff55; letter-spacing: .6px; font-weight: 400; font-size: 10.5px; }
-.matrix tr.top th.rowh { color: var(--oled-dim); font-size: 9px; }
+/* ---- mod matrix: backlit rubber pads on a fixed column grid + MATRIX encoder ---- */
+.mxwrap { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+.mxgrid, .enc { border-radius: 6px; background: linear-gradient(180deg, #17191c, #131417); box-shadow: inset 0 2px 5px #000c, 0 1px 0 #ffffff10; }
+.mxgrid { flex: 1 1 640px; min-width: 0; padding: 10px 12px 8px; }
+.matrix { width: 100%; min-width: 660px; table-layout: fixed; border-collapse: separate; border-spacing: 6px 5px; }
+.matrix col.c0 { width: 152px; }
+.matrix th { padding: 0; font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); text-shadow: 0 1px 0 #000; vertical-align: middle; }
+.matrix th.rowh { text-align: left; white-space: nowrap; }
+.matrix tr.scr th.rowh { color: #b4bac3; }
+.matrix tr.top > * { padding-bottom: 5px; vertical-align: bottom; }
+.matrix tr.top th.rowh { font-size: 8.5px; color: #5f6670; padding-bottom: 11px; }
 .matrix td { padding: 0; text-align: center; vertical-align: middle; }
-.matrix tr.sep > * { padding-top: 12px; }
-.matrix tr:not(.scr) td { padding-left: 3px; padding-right: 3px; }
-.matrix select.cs {
-  min-width: 84px; font-size: 10px; padding: 3px 16px 3px 4px; color: var(--oled); background-color: transparent; border: 1px solid transparent; box-shadow: none;
-  text-transform: uppercase; letter-spacing: .4px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%23e9f3ff'/%3E%3C/svg%3E");
-}
-.matrix select.cs:hover, .matrix select.cs:focus-visible { border-color: var(--oled-dim); box-shadow: none; }
-.matrix select.cs option, .matrix select.cs optgroup { background: #050607; color: var(--oled); }
-.matrix .out { font-family: var(--mono); font-size: 10.5px; color: var(--lcd); }
-.matrix .out .meter { margin-bottom: 3px; }
-.matrix .rh { display: flex; align-items: center; gap: 0; }
-.matrix .rn { flex: 1; }
-.meter.mm { width: 40px; height: 5px; margin-left: 10px; background: #0b0f14; border-color: #1a2028; box-shadow: none; }
-.meter.mm::after { background: repeating-linear-gradient(90deg, transparent 0 3px, #0b0f14 3px 4px); }
-.rled { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: #1d2127; vertical-align: 1px; }
-.rled.on { background: var(--oled); box-shadow: 0 0 6px var(--oled); }
+.matrix tr.sep > * { padding-top: 12px; background: linear-gradient(#000, #000) top / 100% 1px no-repeat, linear-gradient(#ffffff0c, #ffffff0c) 0 1px / 100% 1px no-repeat; }
+.matrix select.cs { width: 100%; font-size: 10px; padding: 5px 16px 5px 6px; background-position: right 5px center; }
+.matrix .rh { display: flex; align-items: center; gap: 8px; }
+.matrix .rn { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.rled { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #3a1d12; box-shadow: inset 0 0 0 1px #000, inset 0 1px 2px #000; }
+.rled.on { background: var(--accent); box-shadow: 0 0 6px var(--accent), inset 0 0 0 1px #0005; }
+.meter.mm { flex: none; width: 34px; height: 6px; }
 .pad {
-  --l: 50%; --w: 0%; position: relative; display: block; width: 100%; min-width: 46px; height: 26px; padding: 0 0 4px;
-  background: transparent; border: 0; border-radius: 0; box-shadow: none; color: var(--oled-dim);
-  font: 11px/1 var(--mono); letter-spacing: 0; text-transform: none; cursor: pointer;
+  --l: 50%; --w: 0%; --m: 0; --led: var(--accent);
+  position: relative; display: block; width: 100%; height: 30px; padding: 0 0 5px; cursor: pointer;
+  font: 10.5px/1 var(--mono); letter-spacing: 0; text-transform: none; color: #5f6670;
+  border: 1px solid #000; border-radius: 5px;
+  background: linear-gradient(180deg, #30333a, #222429);
+  box-shadow: inset 0 1px 0 #ffffff1c, 0 2px 3px #0009;
 }
-.pad.on { color: var(--oled); text-shadow: 0 0 4px #9fc7ff66; }
-.pad::before { content: ""; position: absolute; left: 22%; right: 22%; bottom: 4px; height: 2px; background: #161b21; }
-.pad::after { content: ""; position: absolute; bottom: 4px; height: 2px; left: calc(22% + var(--l) * .56); width: calc(var(--w) * .56); background: var(--oled); }
-.pad:hover { color: var(--oled); box-shadow: inset 0 0 0 1px var(--oled-dim); }
-.pad:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--oled); }
-.pad.sel { background: var(--oled); color: #000; text-shadow: none; }
-.pad.sel::before { background: #9aa6b2; }
-.pad.sel::after { background: #000; }
-.pad:active { transform: none; }
-.enc { flex: 0 0 180px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px; border-radius: 6px; background: #14161a; box-shadow: inset 0 2px 6px #000; }
-.enc-oled { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; padding: 8px 6px; font-size: 10.5px; text-align: center; text-transform: uppercase; }
-.enc-oled b { font-size: 22px; font-weight: 400; margin: 4px 0 2px; text-shadow: 0 0 6px #9fc7ff66; }
-.enc-oled small { color: var(--oled-dim); font-size: 9px; letter-spacing: 1px; }
-.knob.lg { width: 100px; }
-.knob.lg .dial { width: 64px; height: 64px; margin: 9px 0; background: repeating-conic-gradient(from 0deg, #2c3036 0 6deg, #3b4048 6deg 12deg); }
-.knob.lg .dial::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #4f545d, #23262b 70%); box-shadow: 0 1px 3px #000c, inset 0 1px 0 #ffffff26; }
-.knob.lg .dial i { z-index: 1; }
-.knob.lg .dial::before { inset: -8px; -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); }
-.knob.lg .dial i::before { height: 18px; width: 3px; margin-left: -1.5px; top: 11px; background: var(--oled); box-shadow: 0 0 5px #9fc7ff88; }
-.knob.lg output { display: none; }
-.knob.enc-knob { --accent: #e9f3ff; }
+.pad.neg { --led: var(--accent2); }
+.pad.on {
+  color: #fff; text-shadow: 0 0 4px var(--led);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--led) calc(28% + var(--m) * 45%), #30333a), color-mix(in srgb, var(--led) calc(16% + var(--m) * 35%), #1d1f23));
+  box-shadow: inset 0 1px 0 #ffffff26, 0 2px 3px #0009, 0 0 calc(4px + var(--m) * 10px) color-mix(in srgb, var(--led) 45%, transparent);
+}
+.pad::before { content: ""; position: absolute; left: 16%; right: 16%; bottom: 5px; height: 2px; border-radius: 1px; background: #0008; }
+.pad::after { content: ""; position: absolute; bottom: 5px; height: 2px; border-radius: 1px; left: calc(16% + var(--l) * .68); width: calc(var(--w) * .68); background: var(--led); box-shadow: 0 0 4px var(--led); }
+.pad.on::after { background: #fff; }
+.pad:hover { box-shadow: inset 0 1px 0 #ffffff26, 0 2px 3px #0009, 0 0 0 1px #4a505a; color: var(--text); }
+.pad:active, .pad.sel { transform: translateY(1px); }
+.pad.sel { box-shadow: inset 0 2px 4px #0008, 0 0 0 1px #000, 0 0 0 3px var(--warn); }
+.pad:focus-visible { outline: none; }
+.matrix .out { font: 10.5px var(--mono); color: var(--lcd); }
+.matrix .out .meter { margin: 0 4px 3px; }
+.matrix td .knob { margin: 0 auto; }
 .cap { display: block; text-align: center; font-size: 9px; color: var(--warn); letter-spacing: .3px; }
 .cap.ok { color: var(--lcd); }
+.enc { flex: 0 0 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px 12px; }
+.enc-oled { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; padding: 8px 6px; font: 10.5px var(--mono); color: var(--lcd); text-align: center; text-transform: uppercase; }
+.enc-oled > span:first-child { color: var(--lcd-dim); }
+.enc-oled b { font-size: 24px; font-weight: 400; margin: 4px 0 1px; text-shadow: 0 0 8px #7dffb066; }
+.enc-oled small { color: var(--lcd-dim); font-size: 9px; letter-spacing: 1px; }
+.knob.lg { width: 100px; }
+.knob.lg .dial { width: 64px; height: 64px; margin: 9px 0; background: repeating-conic-gradient(from 0deg, #2c3036 0 6deg, #3b4048 6deg 12deg); }
+.knob.lg .dial::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #5a5f69, #2a2d33 60%, #1b1d21); box-shadow: 0 1px 3px #000c, inset 0 1px 0 #ffffff30; }
+.knob.lg .dial i { z-index: 1; }
+.knob.lg .dial::before { inset: -8px; -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); }
+.knob.lg .dial i::before { height: 16px; width: 3px; margin-left: -1.5px; top: 11px; }
+.knob.lg output { display: none; }
+.enc > .lbl { font-size: 10px; letter-spacing: 2.5px; color: #b4bac3; }
+.enc button { width: 100%; }
+@media (max-width: 1100px) { .enc { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 18px; } .enc-oled { width: 180px; } .enc button { width: auto; } }
 .srcgrid { display: grid; grid-template-columns: 78px 1fr 44px; gap: 6px 10px; align-items: center; font-size: 11px; }
 .srcgrid > span:nth-child(3n+1) { font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
 .srcgrid span:last-child, .srcgrid .v { font-family: var(--mono); text-align: right; color: var(--lcd); }
@@ -318,7 +346,7 @@ const DEFAULT_STATE = {
   grid: { cols: [74, 71, 24, 15, 13, 73, 72, 92], cells: {} }, // cells: 'src|cc' -> depth (-100..100)
   bases: {},
   captured: {},
-  view: { setup: true, monitor: false },
+  view: { setup: true, matrix: true, modulators: true, monitor: false },
 };
 const STORE_KEY = 's1-modhub-v1';
 let state = loadState();
@@ -706,8 +734,8 @@ function render() {
     </div>
   </details>
 
-  <div class="zone">
-    <div class="zone-h">Mod matrix <span>sources &times; destinations</span></div>
+  <details class="zone" data-view="matrix" ${s.view.matrix ? 'open' : ''}>
+    <summary class="zone-h">Mod matrix <span>sources &times; destinations</span></summary>
     <section>
       <div class="mxwrap">
         <div class="table-scroll mxgrid">${matrixHtml()}</div>
@@ -716,47 +744,47 @@ function render() {
       <p class="note">Click a cell to route it, then turn MATRIX. Arrows move the cursor, +/- nudge, double-click clears.
         Output = S-1 knob + sum of (source &times; amount). The knob row follows the S-1 panel once you turn a knob there ("captured"); until then it assumes 64.</p>
     </section>
-  </div>
+  </details>
 
-  <div class="zone">
-    <div class="zone-h">Modulators <span>the sources feeding the matrix</span></div>
-    <div class="row r4">
-      ${s.lfos.map((l, i) => `<section>
+  <details class="zone" data-view="modulators" ${s.view.modulators ? 'open' : ''}>
+    <summary class="zone-h">Modulators <span>the sources feeding the matrix</span></summary>
+    <div class="mods">
+      ${s.lfos.map((l, i) => `<section style="grid-area: l${i + 1}">
         <h2>LFO ${i + 1} <span class="mini"><span class="meter bi"><i data-src="lfo${i + 1}"></i></span></span></h2>
-        <div class="fields">
+        <div class="msel">
           ${sel('Shape', `lfos.${i}.shape`, SHAPES)}
           ${sel('Retrigger', `lfos.${i}.retrig`, RETRIG)}
         </div>
-        <div class="lforow">
-          ${l.sync ? `<div class="divslot">${sel('Division', `lfos.${i}.div`, divOpts)}</div>` : logRng('Rate', `lfos.${i}.rate`, 0.01, 50)}
+        <div class="kgrid">
+          ${l.sync ? `<div class="kslot">${sel('Division', `lfos.${i}.div`, divOpts)}</div>` : logRng('Rate', `lfos.${i}.rate`, 0.01, 50)}
           ${rng('Phase', `lfos.${i}.phase`, 0, 359, 1, 'deg')}
-          ${chk('Sync', `lfos.${i}.sync`)}
         </div>
+        <div class="mfoot">${chk('Sync to clock', `lfos.${i}.sync`)}</div>
       </section>`).join('')}
-    </div>
-    <div class="row rmods">
-      <section>
+      <section style="grid-area: vel">
         <h2>Velocity <span class="mini"><span class="meter"><i data-src="vel"></i></span></span></h2>
-        <div class="fields">${sel('Curve', 'vel.curve', { lin: 'Linear', exp: 'Exponential', log: 'Logarithmic', s: 'S-curve' })}</div>
-        <div class="knobs">${rng('Min', 'vel.min', 0, 100, 1, '%')}${rng('Max', 'vel.max', 0, 100, 1, '%')}${chk('Invert', 'vel.invert')}</div>
+        <div class="msel">${sel('Curve', 'vel.curve', { lin: 'Linear', exp: 'Exponential', log: 'Logarithmic', s: 'S-curve' })}</div>
+        <div class="kgrid"><div class="kgroup" style="--n:2"><span class="lbl">Range</span>${rng('Min', 'vel.min', 0, 100, 1, '%')}${rng('Max', 'vel.max', 0, 100, 1, '%')}</div></div>
+        <div class="mfoot">${chk('Invert', 'vel.invert')}</div>
       </section>
-      <section>
+      <section style="grid-area: env">
         <h2>Note envelope <span class="mini"><span class="meter"><i data-src="env"></i></span></span></h2>
-        <div class="fields">${sel('Mode', 'env.mode', { ad: 'AD (one-shot)', asr: 'ASR (hold while gate)' })}</div>
-        <div class="knobs">${logRng('Attack', 'env.attack', 1, 5000, 'ms')}${logRng('Decay/Rel', 'env.decay', 5, 10000, 'ms')}${rng('Vel amt', 'env.velAmt', 0, 100, 1, '%')}</div>
+        <div class="msel">${sel('Mode', 'env.mode', { ad: 'AD (one-shot)', asr: 'ASR (hold while gate)' })}</div>
+        <div class="kgrid"><div class="kgroup" style="--n:3"><span class="lbl">Contour</span>${logRng('Attack', 'env.attack', 1, 5000, 'ms')}${logRng('Decay/Rel', 'env.decay', 5, 10000, 'ms')}${rng('Vel amt', 'env.velAmt', 0, 100, 1, '%')}</div></div>
+        <div class="mfoot"></div>
       </section>
-      <section>
+      <section style="grid-area: trig">
         <h2>Trig tools <span class="mini"><span class="meter"><i data-src="trig"></i></span></span></h2>
-        <div class="fields">${sel('Division', 'trig.div', divOpts)}</div>
-        <div class="knobs">
-          <div class="kgroup"><span class="lbl">Timing</span><div>${rng('Prob', 'trig.prob', 0, 100, 1, '%')}${rng('Swing', 'trig.swing', 50, 75, 1, '%')}</div></div>
-          <div class="kgroup"><span class="lbl">Ratchet</span><div>${rng('Count', 'trig.ratchet', 1, 4, 1, '')}${rng('Chance', 'trig.ratchetProb', 0, 100, 1, '%')}</div></div>
-          <div class="kgroup"><span class="lbl">Accent</span><div>${rng('Min', 'trig.accMin', 0, 100, 1, '%')}${rng('Max', 'trig.accMax', 0, 100, 1, '%')}${logRng('Decay', 'trig.decay', 5, 2000, 'ms')}</div></div>
+        <div class="msel">${sel('Division', 'trig.div', divOpts)}</div>
+        <div class="kgrid">
+          <div class="kgroup" style="--n:2"><span class="lbl">Timing</span>${rng('Prob', 'trig.prob', 0, 100, 1, '%')}${rng('Swing', 'trig.swing', 50, 75, 1, '%')}</div>
+          <div class="kgroup" style="--n:2"><span class="lbl">Ratchet</span>${rng('Count', 'trig.ratchet', 1, 4, 1, '')}${rng('Chance', 'trig.ratchetProb', 0, 100, 1, '%')}</div>
+          <div class="kgroup" style="--n:3"><span class="lbl">Accent</span>${rng('Min', 'trig.accMin', 0, 100, 1, '%')}${rng('Max', 'trig.accMax', 0, 100, 1, '%')}${logRng('Decay', 'trig.decay', 5, 2000, 'ms')}</div>
         </div>
-        <p class="note">Feeds the "Trig pulse" (decaying accent) and "Trig S&amp;H" (new random value) rows of the matrix on each clocked step.</p>
+        <div class="mfoot"><p class="note">Feeds the "Trig pulse" (decaying accent) and "Trig S&amp;H" (new random value) matrix rows on each clocked step.</p></div>
       </section>
     </div>
-  </div>
+  </details>
 
   <details class="zone" data-view="monitor" ${s.view.monitor ? 'open' : ''}>
     <summary class="zone-h">MIDI monitor <span>incoming and outgoing messages</span></summary>
@@ -785,7 +813,7 @@ function padHtml(s, cc) {
 function matrixHtml() {
   const cols = state.grid.cols;
   if (!cols.includes(ui.sel.cc)) ui.sel.cc = cols[0];
-  return `<table class="matrix">
+  return `<table class="matrix"><colgroup><col class="c0">${cols.map(() => '<col>').join('')}</colgroup>
     <tr class="scr top"><th class="rowh">SRC / DST</th>${cols.map((cc, i) => `<th><select class="cs" data-path="grid.cols.${i}" data-num data-rerender>${dstOptions(cc)}</select></th>`).join('')}</tr>
     ${SOURCES.map(([k, n, bi], r) => `<tr class="scr${r === SOURCES.length - 1 ? ' bot' : ''}"><th class="rowh"><div class="rh"><span class="rled" data-rled="${k}"></span><span class="rn">${n}</span><span class="meter mm ${bi ? 'bi' : ''}"><i data-src="${k}"></i></span></div></th>${cols.map((cc) => `<td>${padHtml(k, cc)}</td>`).join('')}</tr>`).join('')}
     <tr class="sep"><th class="rowh">S-1 knob</th>${cols.map((cc) => `<td>${baseCell(cc)}</td>`).join('')}</tr>
@@ -796,7 +824,7 @@ function encoderHtml() {
   const { src: s, cc } = ui.sel, key = cellKey(s, cc);
   if (state.grid.cells[key] === undefined) state.grid.cells[key] = 0;
   const d = state.grid.cells[key];
-  return `<div class="oled enc-oled"><span>${esc(srcName[s])}</span><span class="arrow">&#9654; ${esc(CC_NAME[cc])}</span>` +
+  return `<div class="lcd enc-oled"><span>${esc(srcName[s])}</span><span class="arrow">&#9654; ${esc(CC_NAME[cc])}</span>` +
     `<b>${signed(d)}</b><small>CC${cc} &middot; ${d ? 'ROUTED' : 'OFF'}</small></div>` +
     rng('', `grid.cells.${key}`, -100, 100, 1, 'sd', 'lg enc-knob') +
     '<span class="lbl">Matrix</span><button id="padClear">Clear routing</button>';
@@ -809,6 +837,7 @@ function paintPads() {
     el.style.setProperty('--l', (50 + Math.min(0, d) / 2) + '%');
     el.style.setProperty('--w', Math.abs(d) / 2 + '%');
     el.classList.toggle('on', d !== 0);
+    el.classList.toggle('neg', d < 0);
     el.classList.toggle('sel', el.dataset.psrc === ui.sel.src && Number(el.dataset.cc) === ui.sel.cc);
     el.firstChild.textContent = d ? signed(d) : '\u00b7';
     el.title = `${el.getAttribute('aria-label')}: ${signed(d)}`;
