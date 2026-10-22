@@ -1,0 +1,7 @@
+# Netlify builds the Vite app; type checks and engine tests must pass before anything is published.
+[build]
+  command = "pnpm verify"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
